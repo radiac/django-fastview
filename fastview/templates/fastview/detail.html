@@ -1,0 +1,12 @@
+{% extends "fastview/base.html" %}
+
+{% block fastview_content %}
+
+<dl>
+  {% for label, value in annotated_object.items %}
+  <dt>{{ label }}</dt>
+  <dd>{{ value }}</dd>
+  {% endfor %}
+</dl>
+
+{% endblock %}

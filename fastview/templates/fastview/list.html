@@ -1,0 +1,37 @@
+{% extends "fastview/base.html" %}
+
+{% block fastview_content %}
+
+{% if can_create %}
+<p><a href="{{ get_create_url }}">Add {{ verbose_name }}</a></p>
+{% endif %}
+
+<table>
+  <thead>
+    <tr>
+      {% for label in view.labels %}
+        <th>{{ label }}</th>
+      {% endfor %}
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for object in annotated_object_list %}
+    <tr>
+      {% for value in object.values %}
+        {% if forloop.first %}
+            <td>{% if object.can_detail %}<a href="{{ object.get_detail_url }}">{{ value }}</a>{% else %}{{ value }}{% endif %}</td>
+        {% else %}
+          <td>{{ value }}</td>
+        {% endif %}
+      {% endfor %}
+      <td>
+        {% if object.can_update %}<a href="{{ object.get_update_url }}">Edit</a>{% endif %}
+        {% if object.can_delete %}<a href="{{ object.get_delete_url }}">Delete</a>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}
