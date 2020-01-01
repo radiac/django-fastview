@@ -24,4 +24,5 @@ deploy:
     tags: true
     distributions: sdist bdist_wheel
     repo: radiac/django-fastview
+    skip_cleanup: true
     skip_existing: true
