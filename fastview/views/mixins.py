@@ -28,10 +28,11 @@ class FastViewMixin(UserPassesTestMixin):
 
     Attributes:
         title: Pattern for page title (added to context as ``title``). Will be rendered
-            by ``format``, passed the view name as ``action``. Subclasses will provide
-            additional values.
+            by ``format``; can use ``{action}`` to show the action label. Subclasses
+            will provide additional values for formatting.
         viewgroup: Reference to the ViewGroup this view is called by (if any).
-        action: The viewgroup action. Used for default title and template name.
+        action: The viewgroup action. Used for template name.
+        action_label: Label when linking to this action. Defaults to view name.
         permission: A Permission class instance
         has_id_slug: Used to determine whether to insert an id (pk or slug) into the url
             or not.
@@ -42,7 +43,9 @@ class FastViewMixin(UserPassesTestMixin):
 
     title: str = "{action}"
     viewgroup: Optional[ViewGroup] = None
+    # TODO: action is now only used for templates; rename to more appropriate var
     action: Optional[str] = None
+    action_label: Optional[str] = None
     permission: Permission = Denied()
     has_id_slug: bool = False
 
@@ -102,6 +105,20 @@ class FastViewMixin(UserPassesTestMixin):
         kwargs["action"] = self.action.replace("_", " ").title()
         return kwargs
 
+    @classmethod
+    def get_action_label(cls):
+        """
+        Get the action label for this view
+
+        Can be called on class or instance
+        """
+        if cls.action_label:
+            return cls.action_label
+        name = getattr(cls, "__name__", type(cls).__name__)
+        if name.endswith("View"):
+            name = name[:-4]
+        return name.replace("_", " ").title()
+
 
 class ModelFastViewMixin(FastViewMixin):
     """
@@ -110,6 +127,7 @@ class ModelFastViewMixin(FastViewMixin):
 
     model: Type[Model]
     annotated_model_object = None
+    action_links = None
 
     def get_queryset(self):
         """
@@ -124,7 +142,7 @@ class ModelFastViewMixin(FastViewMixin):
         """
         Return an AnnotatedObject class for the annotated_object_list
         """
-        return AnnotatedObject.for_view(self)
+        return AnnotatedObject.for_view(self, action_links=self.get_action_links())
 
     def get_title_kwargs(self, **kwargs):
         """
@@ -138,6 +156,16 @@ class ModelFastViewMixin(FastViewMixin):
             }
         )
         return kwargs
+
+    def get_action_links(self):
+        """
+        Return list of action links
+
+        Default template will use this to show links to object action views
+
+        If ``self.action_links is None``, all available action links will be shown
+        """
+        return self.action_links
 
 
 class ObjectFastViewMixin(ModelFastViewMixin):
