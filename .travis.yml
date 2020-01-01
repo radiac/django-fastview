@@ -2,7 +2,7 @@ dist: xenial
 language: python
 install:
 - pip install --upgrade pip wheel setuptools
-- pip install tox coveralls
+- pip install tox
 script:
 - tox
 matrix:
