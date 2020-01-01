@@ -35,6 +35,8 @@ class ViewGroup:
 
     views: Dict[str, Type[View]]
 
+    action_links: Optional[List[str]] = None
+
     def __init__(self, **kwargs):
         """
         Configure view group
@@ -186,11 +188,15 @@ class ViewGroup:
             route = f"{name}/"
         return route
 
+    def get_action_links(self):
+        return self.action_links
+
     def get_context_data(self, view: View, **context: Dict[str, Any]) -> Dict[str, Any]:
         """
         Get additional context data for the view
         """
-
+        # Build using delayed closures, avoid unnecessary potentially expensive lookups
+        # TODO: Is this really worth the complexity? Candidate for simplification.
         def can_factory(to_view):
             def can():
                 return to_view.permission.check(view.request)
@@ -203,24 +209,68 @@ class ViewGroup:
 
             return get_url
 
-        for name, to_view in self.views.items():
-            # List permissions and urls for views which aren't object specific
-            if to_view.has_id_slug:
-                continue
+        def action_links_factory(action_link_data):
+            def action_links():
+                return [
+                    (label, get_url())
+                    for name, label, can, get_url in action_link_data
+                    if can()
+                ]
 
-            # Add URL names to context
-            context[f"get_{name}_url"] = get_url_factory(name)
+            return action_links
 
-            # Add permission check
-            context[f"can_{name}"] = can_factory(to_view)
+        action_links = self.get_action_links()
+        action_link_data = []
+        for name, to_view in self.get_basic_views().items():
+            can = can_factory(to_view)
+            get_url = get_url_factory(name)
+
+            context[f"can_{name}"] = can
+            context[f"get_{name}_url"] = get_url
+
+            if (action_links is None or name in action_links) and name != view.action:
+                action_link_data.append(
+                    (name, to_view.get_action_label(), can, get_url)
+                )
+
+        if action_links:
+            action_link_data = sorted(
+                action_link_data, key=lambda data: action_links.index(data[0])
+            )
+
+        context["action_links"] = action_links_factory(action_link_data)
 
         return context
 
+    def get_object_views(self):
+        """
+        Return a filtered list of views which operate on an existing object - views
+        which have the attribute ``has_id_slug == True`` (see mixins)
+        """
+        return {
+            name: view
+            for name, view in self.views.items()
+            if getattr(view, "has_id_slug", False)
+        }
+
+    def get_basic_views(self):
+        """
+        Return a filtered list of views which do not operate on an existing object - all
+        views which are not returned by ``get_object_views``
+        """
+        return {
+            name: view
+            for name, view in self.views.items()
+            if not getattr(view, "has_id_slug", False)
+        }
+
 
 class ModelViewGroup(ViewGroup):
+    # TODO: Move all of this into the base ViewGroup, except ``action_links`` and views
     model: Model
     id_field_name = "pk"
     owner_field_name = None
+    action_links = ["index", "create", "update", "delete"]
 
     index_view: Type[View] = ListView
     detail_view: Type[View] = DetailView
@@ -241,6 +291,10 @@ class ModelViewGroup(ViewGroup):
             and view.model is None
         ):
             attrs["model"] = self.model
+
+        # Propagate action links, unless specified on the view
+        if getattr(view, "action_links", None) is None:
+            attrs["action_links"] = self.get_action_links()
 
         return attrs
 

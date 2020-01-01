@@ -36,6 +36,7 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
         context["annotated_object_list"] = self.annotated_object_list_generator_factory(
             context["object_list"]
         )
+
         return context
 
     def annotated_object_list_generator_factory(self, object_list):
