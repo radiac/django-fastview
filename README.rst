@@ -291,15 +291,3 @@ For example::
     {% if can_add %}
       <a href="{{ get_add_url }}">Add</a>
     {% endif %}
-
-
-Roadmap
-=======
-
-In no particular order:
-
-* Annotated object enhancements with better integration in the template context
-* List view: support for ordering, searching, filtering and actions
-* List and detail view: improved support for different field types
-* Create and update views: improved support for relations, support for inline formsets
-* Delete view: support for listing cascaded deletes
