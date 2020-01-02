@@ -4,6 +4,9 @@
 
 <form method="post">{% csrf_token %}
     {{ form.as_p }}
+    {% for inline in inlines %}
+      {{ inline.as_p }}
+    {% endfor %}
     <input type="submit" value="Save">
 </form>
 

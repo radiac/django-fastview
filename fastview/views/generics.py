@@ -10,6 +10,7 @@ from .display import ObjectValue
 from .mixins import (
     DisplayFieldMixin,
     FormFieldMixin,
+    InlineMixin,
     ModelFastViewMixin,
     ObjectFastViewMixin,
     SuccessUrlMixin,
@@ -79,14 +80,22 @@ class DetailView(DisplayFieldMixin, ObjectFastViewMixin, generic.DetailView):
 
 
 class CreateView(
-    SuccessUrlMixin, FormFieldMixin, ObjectFastViewMixin, generic.CreateView
+    SuccessUrlMixin,
+    FormFieldMixin,
+    InlineMixin,
+    ObjectFastViewMixin,
+    generic.CreateView,
 ):
     title = "{action} {verbose_name}"
     default_template_name = "fastview/create.html"
 
 
 class UpdateView(
-    SuccessUrlMixin, FormFieldMixin, ObjectFastViewMixin, generic.UpdateView
+    SuccessUrlMixin,
+    FormFieldMixin,
+    InlineMixin,
+    ObjectFastViewMixin,
+    generic.UpdateView,
 ):
     title = "{action} {verbose_name}"
     default_template_name = "fastview/update.html"

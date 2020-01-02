@@ -18,6 +18,7 @@ from .objects import AnnotatedObject
 
 if TYPE_CHECKING:
     from ..viewgroup import ViewGroup
+    from .inlines import Inline
 
 
 class FastViewMixin(UserPassesTestMixin):
@@ -230,6 +231,29 @@ class BaseFieldMixin:
 class FormFieldMixin(BaseFieldMixin):
     fields: List[str]
     exclude: List[str]
+
+
+class InlineMixin:
+    """
+    Mixin for form CBVs which support inlines
+    """
+
+    # TODO: Consider merging with FormFieldMixin when adding support for nested inlines
+    model: Model  # Help type hinting to identify the intended base classes
+    inlines: Optional[List[Inline]] = None
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        formsets = []
+        if self.inlines is not None:
+            for inline_cls in self.inlines:
+                inline = inline_cls(self.model)
+                formset = inline.get_formset()
+                formsets.append(formset)
+        context["inlines"] = formsets
+
+        return context
 
 
 class DisplayFieldMixin(BaseFieldMixin):
