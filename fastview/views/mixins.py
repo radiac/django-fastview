@@ -12,11 +12,14 @@ from django.urls import reverse
 
 from ..constants import INDEX_VIEW
 from ..permissions import Denied, Permission
+from ..forms import InlineParentModelForm
 from .display import AttributeValue, DisplayValue
 from .objects import AnnotatedObject
 
 
 if TYPE_CHECKING:
+    from django.forms import BaseInlineFormSet
+
     from ..viewgroup import ViewGroup
     from .inlines import Inline
 
@@ -235,25 +238,49 @@ class FormFieldMixin(BaseFieldMixin):
 
 class InlineMixin:
     """
-    Mixin for form CBVs which support inlines
+    Mixin for form CBVs (subclassing ProcessFormView) which support inlines
     """
 
     # TODO: Consider merging with FormFieldMixin when adding support for nested inlines
     model: Model  # Help type hinting to identify the intended base classes
     inlines: Optional[List[Inline]] = None
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    def get_form(self, form_class=None):
+        """
+        Return a InlineParentModelForm
+        """
+        # Get form and ensure it's an InlineParentModelForm
+        form = super().get_form(form_class)
+        if not isinstance(form, InlineParentModelForm):
+            # It's not. It should have been set by .inlines.Inline, but someone must
+            # have overriden the default without knowing what they're doing. Fix it.
+            orig_cls = form.__class__
+            form.__class__ = type(
+                str("InlineParent%s" % orig_cls.__name__),
+                (InlineParentModelForm, orig_cls),
+                {},
+            )
 
-        formsets = []
+        # Look up and register the formsets
+        form_prefix = self.get_prefix()
         if self.inlines is not None:
-            for inline_cls in self.inlines:
+            for index, inline_cls in enumerate(self.inlines):
                 inline = inline_cls(self.model)
-                formset = inline.get_formset()
-                formsets.append(formset)
-        context["inlines"] = formsets
+                formset_cls = inline.get_formset()
+                # TODO: Watch for annotated object modifying self.object
+                kwargs = self.get_formset_kwargs(
+                    inline, prefix=f"{form_prefix}__formset_{index}"
+                )
+                formset = formset_cls(**kwargs)
+                form.add_formset(formset)
 
-        return context
+        return form
+
+    def get_formset_kwargs(self, inline: Inline, **extra_kwargs):
+        kwargs = self.get_form_kwargs()
+        kwargs.update(extra_kwargs)
+        kwargs["initial"] = inline.get_initial(self)
+        return kwargs
 
 
 class DisplayFieldMixin(BaseFieldMixin):
