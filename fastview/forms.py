@@ -2,18 +2,19 @@
 Form classes
 """
 
-from typing import List, Optional
+from typing import List
 
-from django.forms import ModelForm, BaseInlineFormSet
+from django.forms import BaseInlineFormSet, ModelForm
 
 
 class InlineParentModelForm(ModelForm):
-    formsets: Optional[List[BaseInlineFormSet]]
+    formsets: List[BaseInlineFormSet]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.formsets = []
 
     def add_formset(self, formset: BaseInlineFormSet):
-        if not hasattr(self, "formsets"):
-            self.formsets = []
-
         self.formsets.append(formset)
 
     def is_valid(self):

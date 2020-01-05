@@ -6,7 +6,7 @@ Mimic Django admin inlines
 from typing import Any, Dict, Optional, Type
 
 from django.db.models import Model
-from django.forms import ModelForm, BaseInlineFormSet
+from django.forms import BaseInlineFormSet, ModelForm
 from django.forms.models import inlineformset_factory
 
 from ..forms import InlineParentModelForm

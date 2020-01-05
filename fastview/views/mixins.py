@@ -11,15 +11,13 @@ from django.db.models import AutoField, Model
 from django.urls import reverse
 
 from ..constants import INDEX_VIEW
-from ..permissions import Denied, Permission
 from ..forms import InlineParentModelForm
+from ..permissions import Denied, Permission
 from .display import AttributeValue, DisplayValue
 from .objects import AnnotatedObject
 
 
 if TYPE_CHECKING:
-    from django.forms import BaseInlineFormSet
-
     from ..viewgroup import ViewGroup
     from .inlines import Inline
 
@@ -243,6 +241,7 @@ class InlineMixin:
 
     # TODO: Consider merging with FormFieldMixin when adding support for nested inlines
     model: Model  # Help type hinting to identify the intended base classes
+    get_form_kwargs: Callable  # Help type hinting
     inlines: Optional[List[Inline]] = None
 
     def get_form(self, form_class=None):
