@@ -248,7 +248,7 @@ class InlineMixin:
         """
         Return a InlineParentModelForm
         """
-        # Get form and ensure it's an InlineParentModelForm
+        # Get form instance and ensure it's an InlineParentModelForm
         form = super().get_form(form_class)
         if not isinstance(form, InlineParentModelForm):
             # It's not. It should have been set by .inlines.Inline, but someone must
@@ -259,6 +259,7 @@ class InlineMixin:
                 (InlineParentModelForm, orig_cls),
                 {},
             )
+            form.__init_inlines__()
 
         # Look up and register the formsets
         form_prefix = self.get_prefix()
