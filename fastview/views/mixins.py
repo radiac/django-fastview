@@ -6,9 +6,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type, Union
 
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import AutoField, Model
 from django.urls import reverse
+from django.utils.translation import gettext as _
 
 from ..constants import INDEX_VIEW
 from ..forms import InlineParentModelForm
@@ -314,10 +316,11 @@ class DisplayFieldMixin(BaseFieldMixin):
         return [field.get_label(self) for field in self.fields]
 
 
-class SuccessUrlMixin:
+class SuccessUrlMixin(SuccessMessageMixin):
     """
     For views which have a success url
     """
+    success_message = _("%(model_name)s was saved successfully")
 
     def get_success_url(self):
         try:
@@ -326,3 +329,9 @@ class SuccessUrlMixin:
             if self.viewgroup:
                 return reverse(f"{self.request.resolver_match.namespace}:{INDEX_VIEW}")
             raise
+
+    def get_success_message(self, cleaned_data):
+        data = cleaned_data.copy()
+        if hasattr(self, "model"):
+            data["model_name"] = self.model._meta.verbose_name.title()
+        return self.success_message % data
