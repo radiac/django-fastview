@@ -34,9 +34,7 @@ class Inline(FormFieldMixin):
     def get_formset_class(self):
         cls = self.formset
         if not issubclass(cls, InlineFormSet):
-            cls = type(
-                "InlineFormSet", (InlineFormSet, cls), {}
-            )
+            cls = type("InlineFormSet", (InlineFormSet, cls), {})
         return cls
 
     def get_formset(self) -> BaseInlineFormSet:

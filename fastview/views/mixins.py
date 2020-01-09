@@ -320,6 +320,7 @@ class SuccessUrlMixin(SuccessMessageMixin):
     """
     For views which have a success url
     """
+
     success_message = _("%(model_name)s was saved successfully")
 
     def get_success_url(self):
