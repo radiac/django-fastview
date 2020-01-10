@@ -13,7 +13,7 @@
     {{ formset.management_form }}
 
     {% for formset_form in formset %}
-      <fieldset class="inline">
+      <fieldset class="fastview formset__root">
         <legend>{{ formset_form.title }}</legend>
         {{ formset_form.non_field_errors }}
         {{ formset_form.as_p }}
