@@ -9,11 +9,17 @@
   </fieldset>
 
   {% for formset in form.formsets %}
+  <fieldset class="fastview formset__root" data-fastview-formset="{{ formset.prefix }}">
     <h2>{{ formset.title }}</h2>
     {{ formset.management_form }}
 
+    <fieldset style="display: nxone" data-fastview-formset-template="">
+      <legend>{{ foormset.empty_form.title }}</legend>
+      {{ formset.empty_form.as_p }}
+    </fieldset>
+
     {% for formset_form in formset %}
-      <fieldset class="fastview formset__root">
+      <fieldset class="fastview formset__form" data-fastview-formset-form="{{ formset_form.prefix }}">
         <legend>{{ formset_form.title }}</legend>
         {{ formset_form.non_field_errors }}
         {{ formset_form.as_p }}
@@ -21,6 +27,7 @@
     {% endfor %}
 
   {% endfor %}
+  </fieldset>
 
   <input type="submit" value="Save">
 </form>
