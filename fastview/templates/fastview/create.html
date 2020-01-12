@@ -13,8 +13,9 @@
     <h2>{{ formset.title }}</h2>
     {{ formset.management_form }}
 
-    <fieldset style="display: nxone" data-fastview-formset-template="">
-      <legend>{{ foormset.empty_form.title }}</legend>
+    <fieldset style="display: none" data-fastview-formset-template="{{
+    formset.empty_form.prefix }}">
+      <legend>{{ formset.empty_form.title }}</legend>
       {{ formset.empty_form.as_p }}
     </fieldset>
 
@@ -25,6 +26,8 @@
         {{ formset_form.as_p }}
       </fieldset>
     {% endfor %}
+
+    <button style="display: none" type="button" data-fastview-formset-add="">Add</a>
 
   {% endfor %}
   </fieldset>
