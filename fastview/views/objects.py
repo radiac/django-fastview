@@ -84,7 +84,7 @@ class AnnotatedObject:
             """
             Return (label, value) pairs
             """
-            return zip(self.labels, self.values)
+            return zip(self.labels(), self.values())
 
         # Attach functions for data values using same patterns as a dict
         attrs = {"view": view, "labels": labels, "values": values, "items": items}
