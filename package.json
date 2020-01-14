@@ -15,9 +15,10 @@
   "devDependencies": {
     "@babel/cli": "^7.2.0",
     "@babel/core": "^7.2.0",
+    "@babel/plugin-proposal-class-properties": "^7.8.0",
     "@babel/preset-env": "^7.2.0",
-    "babel-loader": "^8.0.4",
     "@microsoft/set-webpack-public-path-plugin": "^2.1.103",
+    "babel-loader": "^8.0.4",
     "clean-webpack-plugin": "^2.0.1",
     "css-loader": "^2.0.0",
     "image-webpack-loader": "^4.6.0",

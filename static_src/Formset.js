@@ -6,13 +6,6 @@ const defaultDataFormset = 'fastview-formset';
 const defaultDataForm = 'fastview-formset-form';
 const defaultDataTemplate = 'fastview-formset-template';
 
-const addButton = (formset) => {
-  let button = document.createElement('button');
-  button.innerHTML = 'Add';
-  button.type = 'button';
-  formset.rootEl.appendChild(button);
-  return button;
-};
 
 class Form {
   /**
@@ -22,7 +15,20 @@ class Form {
     this.rootEl = rootEl;
     this.prefix = prefix;
 
-    this.deleteEl = rootEl.querySelector(`[name="${prefix}-DELETE"]`);
+    this.deleteEl = this.getDeleteEl();
+    this.render();
+  }
+
+  getDeleteEl() {
+    let checkbox = this.rootEl.querySelector(`[name="${this.prefix}-DELETE"]`);
+    checkbox.onchange = () => {
+      if (checkbox.checked) {
+        this.deleted();
+      } else {
+        this.undeleted();
+      }
+    };
+    return checkbox
   }
 
   get isDeleted() {
@@ -34,6 +40,11 @@ class Form {
       return;
     }
     this.deleteEl.checked = false;
+    this.deleted();
+  }
+
+  deleted() {
+    this.render();
   }
 
   undelete() {
@@ -41,6 +52,19 @@ class Form {
       return;
     }
     this.deleteEl.checked = true;
+    this.undeleted();
+  }
+
+  undeleted() {
+    this.render();
+  }
+
+  render() {
+    /**
+     * Render the form whenever there is a change to delete state
+     *
+     * Placeholder to allow subclasses to control display of delete button and state
+     */
   }
 }
 
@@ -48,13 +72,12 @@ export class Formset {
   /**
    * Manage a formset
    */
-  constructor(
-    rootEl,
-    prefix,
-    dataForm=defaultDataForm,
-    dataTemplate=defaultDataTemplate,
-    getAddButton=addButton,
-  ) {
+
+  dataForm = defaultDataForm;
+  dataTemplate = defaultDataTemplate;
+  formClass = Form;
+
+  constructor(rootEl, prefix) {
     this.rootEl = rootEl;
     this.prefix = prefix;
 
@@ -65,26 +88,34 @@ export class Formset {
     this.max_num_forms = document.getElementById(`id_${prefix}-MAX_NUM_FORMS`);
 
     // Find existing forms
-    let formEls = rootEl.querySelectorAll(`[data-${dataForm}]`);
+    let formEls = rootEl.querySelectorAll(`[data-${this.dataForm}]`);
     this.forms = []
     formEls.forEach(formEl => {
-      let formPrefix = formEl.getAttribute(`data-${dataForm}`);
-      let form = new Form(formEl, formPrefix);
+      let formPrefix = formEl.getAttribute(`data-${this.dataForm}`);
+      let form = new this.formClass(formEl, formPrefix);
       this.forms.push(form);
     });
 
     // Find template form
-    this.template = rootEl.querySelector(`[data-${dataTemplate}]`);
-    this.templatePrefix = this.template.getAttribute(`data-${dataTemplate}`);
+    this.template = rootEl.querySelector(`[data-${this.dataTemplate}]`);
+    this.templatePrefix = this.template.getAttribute(`data-${this.dataTemplate}`);
 
     // Find and show add button
-    this.addButton = getAddButton(this);
-    this.addButton.onclick = () => {
-      this.add();
-    }
+    this.addEl = this.getAddEl();
   }
 
-  add() {
+  getAddEl() {
+    let button = document.createElement('button');
+    button.innerHTML = 'Add';
+    button.type = 'button';
+    this.rootEl.appendChild(button);
+    button.onclick = () => {
+      this.addForm();
+    }
+    return button;
+  };
+
+  addForm() {
     // Get new form ID
     let id = parseInt(this.total_forms.value, 10);
     id += 1;
@@ -111,18 +142,13 @@ export class Formset {
   }
 }
 
-export function formsets(
-  dataFormset=defaultDataFormset,
-  dataForm=defaultDataForm,
-  dataTemplate=defaultDataTemplate,
-  getAddButton=addButton,
-) {
+export function formsets(dataFormset = defaultDataFormset) {
   /**
    * Initialise formsets with the data attribute matching dataFormset
    */
   let rootEls = document.querySelectorAll(`[data-${dataFormset}]`);
   rootEls.forEach(rootEl => {
     let prefix = rootEl.getAttribute(`data-${dataFormset}`);
-    new Formset(rootEl, prefix, dataForm, dataTemplate, getAddButton);
+    new Formset(rootEl, prefix);
   });
 }
