@@ -11,11 +11,13 @@ class Form {
   /**
    * Track forms within a formset
    */
-  constructor(rootEl, prefix) {
+  constructor(formset, rootEl, prefix) {
+    this.formset = formset;
     this.rootEl = rootEl;
     this.prefix = prefix;
 
     this.deleteEl = this.getDeleteEl();
+    this.deleteCon = this.getDeleteCon();
     this.render();
   }
 
@@ -31,31 +33,23 @@ class Form {
     return checkbox
   }
 
+  getDeleteCon() {
+    return this.deleteEl.parentNode;
+  }
+
   get isDeleted() {
     return this.deleteEl.checked;
   }
 
-  delete() {
-    if (this.isDeleted) {
-      return;
-    }
-    this.deleteEl.checked = false;
-    this.deleted();
-  }
-
   deleted() {
-    this.render();
-  }
-
-  undelete() {
-    if (!this.isDeleted) {
-      return;
-    }
-    this.deleteEl.checked = true;
-    this.undeleted();
+    this.formset.deletedForm(this);
   }
 
   undeleted() {
+    this.formset.addedForm(this);
+  }
+
+  formsetChanged() {
     this.render();
   }
 
@@ -63,8 +57,13 @@ class Form {
     /**
      * Render the form whenever there is a change to delete state
      *
-     * Placeholder to allow subclasses to control display of delete button and state
+     * Hides and shows the delete field
      */
+    if (this.formset.canDelete) {
+      this.deleteCon.style.removeProperty('display');
+    } else {
+      this.deleteCon.style.setProperty('display', 'none');
+    }
   }
 }
 
@@ -82,17 +81,21 @@ export class Formset {
     this.prefix = prefix;
 
     // Find management form
-    this.total_forms = document.getElementById(`id_${prefix}-TOTAL_FORMS`);
-    this.initial_forms = document.getElementById(`id_${prefix}-INITIAL_FORMS`);
-    this.min_num_forms = document.getElementById(`id_${prefix}-MIN_NUM_FORMS`);
-    this.max_num_forms = document.getElementById(`id_${prefix}-MAX_NUM_FORMS`);
+    this.totalFormsEl = document.getElementById(`id_${prefix}-TOTAL_FORMS`);
+    this.initialForms = document.getElementById(`id_${prefix}-INITIAL_FORMS`);
+    this.numFormsMin = parseInt(document.getElementById(`id_${prefix}-MIN_NUM_FORMS`).value, 10);
+    this.numFormsMax = parseInt(document.getElementById(`id_${prefix}-MAX_NUM_FORMS`).value, 10);
+    this.numFormsMin = 3
+    this.numFormsMax = 5
+
+    this.nextId = this.numForms + 1;
 
     // Find existing forms
     let formEls = rootEl.querySelectorAll(`[data-${this.dataForm}]`);
     this.forms = []
     formEls.forEach(formEl => {
       let formPrefix = formEl.getAttribute(`data-${this.dataForm}`);
-      let form = new this.formClass(formEl, formPrefix);
+      let form = new this.formClass(this, formEl, formPrefix);
       this.forms.push(form);
     });
 
@@ -100,8 +103,12 @@ export class Formset {
     this.template = rootEl.querySelector(`[data-${this.dataTemplate}]`);
     this.templatePrefix = this.template.getAttribute(`data-${this.dataTemplate}`);
 
-    // Find and show add button
+    // Find add button
     this.addEl = this.getAddEl();
+    this.addCon = this.getAddCon();
+
+    // Re-render this and all forms
+    this.render();
   }
 
   getAddEl() {
@@ -113,14 +120,54 @@ export class Formset {
       this.addForm();
     }
     return button;
-  };
+  }
+
+  getAddCon() {
+    return this.addEl;
+  }
 
   addForm() {
+    /**
+     * Create and insert a new form, and let all forms know the formset has changed
+     */
     // Get new form ID
-    let id = parseInt(this.total_forms.value, 10);
-    id += 1;
-    this.total_forms.value = id;
+    let id = this.nextId;
 
+    // Create and insert
+    let formRoot = this.createForm(id);
+    let newForm = this.insertForm(id, formRoot);
+
+    // Notify handlers
+    this.addedForm(newForm);
+  }
+
+  render() {
+    /**
+     * Re-render formset and forms
+     */
+    this.forms.forEach(form => {
+      form.formsetChanged();
+    });
+
+    if (this.canAdd) {
+      this.addCon.style.removeProperty('display');
+    } else {
+      this.addCon.style.setProperty('display', 'none');
+    }
+  }
+
+  get numForms() {
+    return parseInt(this.totalFormsEl.value, 10)
+  }
+
+  set numForms(value) {
+    this.totalFormsEl.value = value;
+  }
+
+  createForm(id) {
+    /**
+     * Create a new form
+     */
     // Clone template, replacing __prefix__
     let template = this.template.innerHTML;
     let formHtml = template.replace(/__prefix__/g, id);
@@ -128,6 +175,13 @@ export class Formset {
     formRoot.removeAttribute("style");
     formRoot.innerHTML = formHtml;
 
+    return formRoot
+  }
+
+  insertForm(id,formRoot) {
+    /**
+     * Insert the new form into the formset
+     */
     // Add to the end of the existing forms, or after the template if no forms yet
     let lastForm = this.template;
     if (this.forms.length > 0) {
@@ -137,8 +191,38 @@ export class Formset {
 
     // Register form
     let newPrefix = this.templatePrefix.replace('__prefix__', id)
-    let form = new Form(formRoot, newPrefix)
+    let form = new Form(this, formRoot, newPrefix)
     this.forms.push(form);
+    return form;
+  }
+
+  addedForm(form) {
+    /**
+     * Called when the form has been added to the formset
+     *
+     * Hides and shows the add button
+     */
+    this.numForms += 1
+    this.render();
+  }
+
+  deletedForm(form) {
+    this.numForms -= 1
+    this.render();
+  }
+
+  get canAdd() {
+    /**
+     * Can add if the limit has not been reached
+     */
+    return this.numForms < this.numFormsMax;
+  }
+
+  get canDelete() {
+    /**
+     * Can delete if there are more than the minimum number
+     */
+    return this.numForms > this.numFormsMin;
   }
 }
 
