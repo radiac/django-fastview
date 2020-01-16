@@ -230,6 +230,8 @@ class BaseFieldMixin:
                 and field.name not in exclude
             ]
 
+        self.exclude = exclude
+
 
 class FormFieldMixin(BaseFieldMixin):
     fields: List[str]
