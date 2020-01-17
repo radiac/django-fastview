@@ -23,6 +23,9 @@ class Form {
 
   getDeleteEl() {
     let checkbox = this.rootEl.querySelector(`[name="${this.prefix}-DELETE"]`);
+    if (!checkbox) {
+      return;
+    }
     checkbox.onchange = () => {
       if (checkbox.checked) {
         this.deleted();
@@ -34,6 +37,9 @@ class Form {
   }
 
   getDeleteCon() {
+    if (!this.deleteEl) {
+      return;
+    }
     return this.deleteEl.parentNode;
   }
 
@@ -59,6 +65,9 @@ class Form {
      *
      * Hides and shows the delete field
      */
+    if (!this.deleteCon) {
+      return;
+    }
     if (this.formset.canDelete) {
       this.deleteCon.style.removeProperty('display');
     } else {
@@ -85,8 +94,6 @@ export class Formset {
     this.initialForms = document.getElementById(`id_${prefix}-INITIAL_FORMS`);
     this.numFormsMin = parseInt(document.getElementById(`id_${prefix}-MIN_NUM_FORMS`).value, 10);
     this.numFormsMax = parseInt(document.getElementById(`id_${prefix}-MAX_NUM_FORMS`).value, 10);
-    this.numFormsMin = 3
-    this.numFormsMax = 5
 
     this.nextId = this.numForms + 1;
 
