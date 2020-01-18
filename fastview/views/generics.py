@@ -29,6 +29,7 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
     default_template_name = "fastview/list.html"
     title = "{verbose_name_plural}"
     fields = [ObjectValue()]
+    action = "list"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -71,6 +72,7 @@ class DetailView(DisplayFieldMixin, ObjectFastViewMixin, generic.DetailView):
     title = "{object}"
     default_template_name = "fastview/detail.html"
     has_id_slug = True
+    action = "view"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -88,6 +90,7 @@ class CreateView(
 ):
     title = "{action} {verbose_name}"
     default_template_name = "fastview/create.html"
+    action = "create"
 
 
 class UpdateView(
@@ -100,9 +103,11 @@ class UpdateView(
     title = "{action} {verbose_name}"
     default_template_name = "fastview/update.html"
     has_id_slug = True
+    action = "upoate"
 
 
 class DeleteView(SuccessUrlMixin, ObjectFastViewMixin, generic.DeleteView):
     title = "{action} {verbose_name}"
     default_template_name = "fastview/delete.html"
     has_id_slug = True
+    action = "delete"
