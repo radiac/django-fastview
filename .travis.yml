@@ -28,11 +28,12 @@ deploy:
   script: bash check_travis.sh
   on:
     branch: feature/js-build
-    skip_cleanup: true
+  skip_cleanup: true
 - provider: script
   script: bash check_travis.sh
   on:
     branch: feature/js-build
+  skip_cleanup: true
 #  provider: pypi
 #  user: radiac
 #  password:
@@ -41,5 +42,5 @@ deploy:
 #    tags: true
 #    distributions: sdist bdist_wheel
 #    repo: radiac/django-fastview
-#    skip_cleanup: true
-#    skip_existing: true
+#  skip_cleanup: true
+#  skip_existing: true
