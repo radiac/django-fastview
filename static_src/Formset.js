@@ -233,13 +233,16 @@ export class Formset {
   }
 }
 
-export function formsets(dataFormset = defaultDataFormset) {
+export function formsets(
+  dataFormset = defaultDataFormset,
+  formsetClass = Formset,
+) {
   /**
    * Initialise formsets with the data attribute matching dataFormset
    */
   let rootEls = document.querySelectorAll(`[data-${dataFormset}]`);
   rootEls.forEach(rootEl => {
     let prefix = rootEl.getAttribute(`data-${dataFormset}`);
-    new Formset(rootEl, prefix);
+    new formsetClass(rootEl, prefix);
   });
 }
