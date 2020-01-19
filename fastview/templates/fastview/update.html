@@ -1,10 +1,1 @@
-{% extends "fastview/base.html" %}
-
-{% block fastview_content %}
-
-<form method="post">{% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Save">
-</form>
-
-{% endblock %}
+{% extends "fastview/create.html" %}

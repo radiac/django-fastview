@@ -6,11 +6,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type, Union
 
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import AutoField, Model
 from django.urls import reverse
+from django.utils.translation import gettext as _
 
 from ..constants import INDEX_VIEW
+from ..forms import InlineParentModelForm
 from ..permissions import Denied, Permission
 from .display import AttributeValue, DisplayValue
 from .objects import AnnotatedObject
@@ -18,6 +21,7 @@ from .objects import AnnotatedObject
 
 if TYPE_CHECKING:
     from ..viewgroup import ViewGroup
+    from .inlines import Inline
 
 
 class FastViewMixin(UserPassesTestMixin):
@@ -226,10 +230,61 @@ class BaseFieldMixin:
                 and field.name not in exclude
             ]
 
+        self.exclude = exclude
+
 
 class FormFieldMixin(BaseFieldMixin):
     fields: List[str]
     exclude: List[str]
+
+
+class InlineMixin:
+    """
+    Mixin for form CBVs (subclassing ProcessFormView) which support inlines
+    """
+
+    # TODO: Consider merging with FormFieldMixin when adding support for nested inlines
+    model: Model  # Help type hinting to identify the intended base classes
+    get_form_kwargs: Callable  # Help type hinting
+    inlines: Optional[List[Inline]] = None
+
+    def get_form(self, form_class=None):
+        """
+        Return a InlineParentModelForm
+        """
+        # Get form instance and ensure it's an InlineParentModelForm
+        form = super().get_form(form_class)
+        if not isinstance(form, InlineParentModelForm):
+            # It's not. It should have been set by .inlines.Inline, but someone must
+            # have overriden the default without knowing what they're doing. Fix it.
+            orig_cls = form.__class__
+            form.__class__ = type(
+                str("InlineParent%s" % orig_cls.__name__),
+                (InlineParentModelForm, orig_cls),
+                {},
+            )
+            form.__init_inlines__()
+
+        # Look up and register the formsets
+        form_prefix = self.get_prefix()
+        if self.inlines is not None:
+            for index, inline_cls in enumerate(self.inlines):
+                inline = inline_cls(self.model)
+                formset_cls = inline.get_formset()
+                # TODO: Watch for annotated object modifying self.object
+                kwargs = self.get_formset_kwargs(
+                    inline, prefix=f"{form_prefix}__formset_{index}"
+                )
+                formset = formset_cls(**kwargs)
+                form.add_formset(formset)
+
+        return form
+
+    def get_formset_kwargs(self, inline: Inline, **extra_kwargs):
+        kwargs = self.get_form_kwargs()
+        kwargs.update(extra_kwargs)
+        kwargs["initial"] = inline.get_initial(self)
+        return kwargs
 
 
 class DisplayFieldMixin(BaseFieldMixin):
@@ -263,10 +318,12 @@ class DisplayFieldMixin(BaseFieldMixin):
         return [field.get_label(self) for field in self.fields]
 
 
-class SuccessUrlMixin:
+class SuccessUrlMixin(SuccessMessageMixin):
     """
     For views which have a success url
     """
+
+    success_message = _("%(model_name)s was saved successfully")
 
     def get_success_url(self):
         try:
@@ -275,3 +332,9 @@ class SuccessUrlMixin:
             if self.viewgroup:
                 return reverse(f"{self.request.resolver_match.namespace}:{INDEX_VIEW}")
             raise
+
+    def get_success_message(self, cleaned_data):
+        data = cleaned_data.copy()
+        if hasattr(self, "model"):
+            data["model_name"] = self.model._meta.verbose_name.title()
+        return self.success_message % data

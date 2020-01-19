@@ -3,8 +3,36 @@
 {% block fastview_content %}
 
 <form method="post">{% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Save">
+  <fieldset class="primary">
+  {{ form.non_field_errors }}
+  {{ form.as_p }}
+  </fieldset>
+
+  {% for formset in form.formsets %}
+  <fieldset class="fastview formset__root" data-fastview-formset="{{ formset.prefix }}">
+    <h2>{{ formset.title }}</h2>
+    {{ formset.management_form }}
+
+    <fieldset style="display: none" data-fastview-formset-template="{{
+    formset.empty_form.prefix }}">
+      <legend>{{ formset.empty_form.title }}</legend>
+      {{ formset.empty_form.as_p }}
+    </fieldset>
+
+    {% for formset_form in formset %}
+      <fieldset class="fastview formset__form" data-fastview-formset-form="{{ formset_form.prefix }}">
+        <legend>{{ formset_form.title }}</legend>
+        {{ formset_form.non_field_errors }}
+        {{ formset_form.as_p }}
+      </fieldset>
+    {% endfor %}
+
+    <button style="display: none" type="button" data-fastview-formset-add="">Add</a>
+
+  {% endfor %}
+  </fieldset>
+
+  <input type="submit" value="Save">
 </form>
 
 {% endblock %}
