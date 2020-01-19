@@ -21,12 +21,38 @@ a virtualenv::
     virtualenv django-fastview
     cd django-fastview
     source bin/activate
-    pip install -e git+git@github.com:USERNAME/django-fastview.git#egg=django-fastview[testing]
+    pip install -e
+    git+git@github.com:USERNAME/django-fastview.git#egg=django-fastview[testing]
 
 (replacing ``USERNAME`` with your username).
 
 This will install the testing dependencies too, and you'll find the Fastview source
 ready for you to work on in the ``src`` folder of your virtualenv.
+
+
+JavaScript changes
+==================
+
+.. note::
+
+    When submitting changes to the JavaScript code, please just commit the changes made
+    in ``static_src/`` - **do not** commit built JavaScript resources in
+    ``fastview/static/``.
+
+The project is set up to build using `nvm`_ and `yvm`_::
+
+    cd src/django-fastview
+    nvm use
+    yvm use
+
+.. _nvm: https://github.com/creationix/nvm
+.. _yvm: https://yvm.js.org/docs/overview
+
+There are three commands::
+
+    npm run watch  # run a webpack dev server for using with HMR
+    npm run dev    # dev build
+    npm run build  # minimised prod build for distribution
 
 
 Testing
