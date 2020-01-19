@@ -28,6 +28,7 @@ deploy:
   script: bash check_travis.sh
   on:
     branch: feature/js-build
+    skip_cleanup: true
 - provider: script
   script: bash check_travis.sh
   on:
