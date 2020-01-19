@@ -17,11 +17,11 @@ matrix:
     env: TOXENV=py38-django3.0
 before_deploy:
     if ! [[ $TRAVIS_BUILD_FASTVIEW_JS ]]; then
-        TRAVIS_BUILD_FASTVIEW_JS=true
-        nvm install
-        nvm use
-        yarn
-        npm run build
+        TRAVIS_BUILD_FASTVIEW_JS=true &&
+        nvm install &&
+        nvm use &&
+        yarn &&
+        npm run build;
     fi
 deploy:
 - provider: script
