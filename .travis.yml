@@ -16,9 +16,13 @@ matrix:
   - python: '3.8'
     env: TOXENV=py38-django3.0
 before_deploy:
-- nvm use
-- yarn
-- npm run build
+    if ! [[ $TRAVIS_BUILD_FASTVIEW_JS ]]; then
+        TRAVIS_BUILD_FASTVIEW_JS=true
+        nvm install
+        nvm use
+        yarn
+        npm run build
+    fi
 deploy:
 - provider: script
   script: bash check_travis.sh
