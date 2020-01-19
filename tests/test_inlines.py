@@ -25,6 +25,7 @@ def test_inline_formset__formset_has_data(add_url, client, user_owner):
     add_url("<int:pk>/", UpdateEntry.as_view())
     response = client.get(f"/{entry.pk}/")
 
+    # Check the two comments are in the formset
     assert "form" in response.context_data
     form = response.context_data["form"]
     assert isinstance(form, InlineParentModelForm)

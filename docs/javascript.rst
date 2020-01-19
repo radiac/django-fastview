@@ -49,6 +49,10 @@ Customising
 The code is designed to be subclassed. Override values and methods to fit your
 templates.
 
+You can override the default formset or form classes; these control how the add and
+delete buttons are created or managed, how new forms should be inserted, and what
+happens when a form is added or deleted.
+
 
 Bundling
 --------
