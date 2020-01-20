@@ -16,31 +16,21 @@ matrix:
   - python: '3.8'
     env: TOXENV=py38-django3.0
 before_deploy:
-    if ! [[ $TRAVIS_BUILD_FASTVIEW_JS ]]; then
-        TRAVIS_BUILD_FASTVIEW_JS=true &&
-        nvm install &&
-        nvm use &&
-        yarn &&
-        npm run build;
-    fi
+  if ! [[ $TRAVIS_FASTVIEW_JS_BUILT ]]; then
+    TRAVIS_FASTVIEW_JS_BUILT=true &&
+    nvm install &&
+    nvm use &&
+    yarn &&
+    npm run build;
+  fi
 deploy:
-- provider: script
-  script: bash check_travis.sh
+  provider: pypi
+  user: radiac
+  password:
+    secure: G9Gx71SgfB8ECRi4ttrf1BAPJie//c1EH+iIgD3ALLnW9QlcSXiK+Q47VTvwrhLNp4NBO9QFBRhl6/7EzTSwP3F4iWIf00DNBgf3HDn8Ek0vbTH7KkeDvQGdXuv6uO7zsHPLRlwypzeyMXfF6vIYs8U1uzvpT+77U1frhPSgHHragN5DnqMrTKoEmTdRhdYo/fwGweyyrqOMcDBjE40adjd3n7NddsyJjb6rX5czjx7Ff2WcSQKXUrP7BGLcKUhYOkudYNvC5chvYRDoyzfC4vi8qBuxZvExhEm9sZn/2Dgj/aHo/vArf5/8BusaH1Yyy76qGI8atNdfP3sAsa0bojTPL4+mLBooX28iByu6bfTBU9zKg/RnKT/CaFFyRNoUg1EJhXFQgvzNO50T2E53uqYs1vd+DKr8bCGK+JXpxuHEleOueAUZfcr4R7wqIIb72ARndj1Iq2KHEv16gFVEmbXI2LUOrVeMVEGzlB8CWuf+tIEsW1jnf0+Mh6l5mb60LYMmBcDT5gFHJHmlJVokXSAJ/db3o08JxNzjYbZe3YjADKSfWJfg51KTdOFQd0l/FfTxU7doluK+tOx8DCeX57PCGUl0JYlzLwby4DyXJWpvWhLf5d9BM91GkgfS8hRcCPvUlJp7D/74CvxqjK5ih3SYEd4JB3s46riM2Wom6Pw=
   on:
-    branch: feature/js-build
+    tags: true
+    distributions: sdist bdist_wheel
+    repo: radiac/django-fastview
   skip_cleanup: true
-- provider: script
-  script: bash check_travis.sh
-  on:
-    branch: feature/js-build
-  skip_cleanup: true
-#  provider: pypi
-#  user: radiac
-#  password:
-#    secure: G9Gx71SgfB8ECRi4ttrf1BAPJie//c1EH+iIgD3ALLnW9QlcSXiK+Q47VTvwrhLNp4NBO9QFBRhl6/7EzTSwP3F4iWIf00DNBgf3HDn8Ek0vbTH7KkeDvQGdXuv6uO7zsHPLRlwypzeyMXfF6vIYs8U1uzvpT+77U1frhPSgHHragN5DnqMrTKoEmTdRhdYo/fwGweyyrqOMcDBjE40adjd3n7NddsyJjb6rX5czjx7Ff2WcSQKXUrP7BGLcKUhYOkudYNvC5chvYRDoyzfC4vi8qBuxZvExhEm9sZn/2Dgj/aHo/vArf5/8BusaH1Yyy76qGI8atNdfP3sAsa0bojTPL4+mLBooX28iByu6bfTBU9zKg/RnKT/CaFFyRNoUg1EJhXFQgvzNO50T2E53uqYs1vd+DKr8bCGK+JXpxuHEleOueAUZfcr4R7wqIIb72ARndj1Iq2KHEv16gFVEmbXI2LUOrVeMVEGzlB8CWuf+tIEsW1jnf0+Mh6l5mb60LYMmBcDT5gFHJHmlJVokXSAJ/db3o08JxNzjYbZe3YjADKSfWJfg51KTdOFQd0l/FfTxU7doluK+tOx8DCeX57PCGUl0JYlzLwby4DyXJWpvWhLf5d9BM91GkgfS8hRcCPvUlJp7D/74CvxqjK5ih3SYEd4JB3s46riM2Wom6Pw=
-#  on:
-#    tags: true
-#    distributions: sdist bdist_wheel
-#    repo: radiac/django-fastview
-#  skip_cleanup: true
-#  skip_existing: true
+  skip_existing: true
