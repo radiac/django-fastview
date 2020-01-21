@@ -29,8 +29,10 @@ This will install the testing dependencies too, and you'll find the Fastview sou
 ready for you to work on in the ``src`` folder of your virtualenv.
 
 
-JavaScript changes
-==================
+.. _js-build-static:
+
+Building JavaScript
+===================
 
 .. note::
 
