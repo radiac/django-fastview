@@ -2,7 +2,7 @@
   "name": "django_fastview",
   "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "static_src/index.js",
   "scripts": {
     "watch": "webpack-dev-server --mode development",
     "dev": "webpack --mode development",
