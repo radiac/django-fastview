@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "",
   "main": "static_src/index.js",
+  "files": ["static_src/*.js"],
   "scripts": {
     "watch": "webpack-dev-server --mode development",
     "dev": "webpack --mode development",
