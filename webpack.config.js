@@ -70,7 +70,7 @@ const config = {
   // Enable sourcemaps for debugging webpack's output.
   devtool: 'source-map',
   devServer: {
-    contentBase: './static_src',
+    contentBase: './fastview/static/fastview',
     hot: true,
     disableHostCheck: true,
     port: devServerPort,
