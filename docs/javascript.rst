@@ -1,11 +1,23 @@
-=======================
-Working with JavaScript
-=======================
+=====================
+Fastview's JavaScript
+=====================
 
-Fastview provides JavaScript resources to enhance the default templates. They are
-pre-bundled in the ``static`` files for the app, or the source is available for you to
-override and bundle in your own project's JavaScript.
+When downloaded from PyPI, this package contains pre-bundled JavaScript for managing
+formsets. When used normally, these will be included in your static files and the
+default templates will load them automatically; there is nothing more for you to do. See
+:ref:`js-pre-bundled` below when writing custom templates.
 
+If you want to customise the JavaScript by subclassing, or want to include it in your
+own bundle or build process, you can use the corresponding npm package. Both PyPI and
+npm releases follow semantic versioning of ``major.minor.patch``; the ``major.minor``
+versions will be released in sync, use the latest ``patch`` version available. See
+:ref:`js-customising` below when doing this.
+
+The bundle files are excluded from the repository, so if installing from git you will
+need to bundle it yourself - see :ref:`js-build-static` for more details.
+
+
+.. _js-pre-bundled:
 
 Using the pre-bundled static
 ============================
@@ -39,6 +51,8 @@ following ``data-`` attributes on form elements:
 
 See :gitref:`fastview/templates/create.html` for a sample formset.
 
+
+.. _js-customising:
 
 Customising and bundling your own
 =================================

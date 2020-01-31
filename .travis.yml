@@ -15,6 +15,14 @@ matrix:
     env: TOXENV=py38-django2.2
   - python: '3.8'
     env: TOXENV=py38-django3.0
+before_deploy:
+  if ! [[ $TRAVIS_FASTVIEW_JS_BUILT ]]; then
+    TRAVIS_FASTVIEW_JS_BUILT=true &&
+    nvm install &&
+    nvm use &&
+    yarn &&
+    npm run build;
+  fi
 deploy:
   provider: pypi
   user: radiac
@@ -24,5 +32,5 @@ deploy:
     tags: true
     distributions: sdist bdist_wheel
     repo: radiac/django-fastview
-    skip_cleanup: true
-    skip_existing: true
+  skip_cleanup: true
+  skip_existing: true

@@ -21,8 +21,7 @@ a virtualenv::
     virtualenv django-fastview
     cd django-fastview
     source bin/activate
-    pip install -e
-    git+git@github.com:USERNAME/django-fastview.git#egg=django-fastview[testing]
+    pip install -e git+git@github.com:USERNAME/django-fastview.git#egg=django-fastview[testing]
 
 (replacing ``USERNAME`` with your username).
 
@@ -30,8 +29,10 @@ This will install the testing dependencies too, and you'll find the Fastview sou
 ready for you to work on in the ``src`` folder of your virtualenv.
 
 
-JavaScript changes
-==================
+.. _js-build-static:
+
+Building JavaScript
+===================
 
 .. note::
 
