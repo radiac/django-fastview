@@ -4,15 +4,14 @@ Django Fastview
 
 Build admin-style views with minimal code.
 
-* Project site: http://radiac.net/projects/django-fastview/
-* Source code: https://github.com/radiac/django-fastview
-
 .. image:: https://travis-ci.org/radiac/django-fastview.svg?branch=master
     :target: https://travis-ci.org/radiac/django-fastview
 
 .. image:: https://coveralls.io/repos/radiac/django-fastview/badge.svg?branch=master&service=github
     :target: https://coveralls.io/github/radiac/django-fastview?branch=master
 
+* Project site: http://radiac.net/projects/django-fastview/
+* Source code: https://github.com/radiac/django-fastview
 * Requires Python 3.7 or later and Django 2.2 or later
 
 

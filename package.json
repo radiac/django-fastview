@@ -1,14 +1,16 @@
 {
   "name": "django_fastview",
-  "version": "0.0.1",
-  "description": "",
+  "version": "0.0.2",
+  "description": "JavaScript resources for Django Fastview",
   "homepage": "http://radiac.net/projects/django-fastview/",
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/radiac/django-fastview.git"
+    "type": "git",
+    "url": "https://github.com/radiac/django-fastview.git"
   },
   "main": "static_src/index.js",
-  "files": ["static_src/*.js"],
+  "files": [
+    "static_src/*.js"
+  ],
   "scripts": {
     "watch": "webpack-dev-server --mode development",
     "dev": "webpack --mode development",

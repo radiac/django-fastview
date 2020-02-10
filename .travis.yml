@@ -23,8 +23,15 @@ before_deploy:
     yarn &&
     npm run build;
   fi
+  if [[ ! -e README.md ]]; then
+    npm run prepackage;
+  fi
+after_deploy:
+  if [[ -e README.md ]]; then
+    npm run postpackage;
+  fi
 deploy:
-  provider: pypi
+- provider: pypi
   user: radiac
   password:
     secure: G9Gx71SgfB8ECRi4ttrf1BAPJie//c1EH+iIgD3ALLnW9QlcSXiK+Q47VTvwrhLNp4NBO9QFBRhl6/7EzTSwP3F4iWIf00DNBgf3HDn8Ek0vbTH7KkeDvQGdXuv6uO7zsHPLRlwypzeyMXfF6vIYs8U1uzvpT+77U1frhPSgHHragN5DnqMrTKoEmTdRhdYo/fwGweyyrqOMcDBjE40adjd3n7NddsyJjb6rX5czjx7Ff2WcSQKXUrP7BGLcKUhYOkudYNvC5chvYRDoyzfC4vi8qBuxZvExhEm9sZn/2Dgj/aHo/vArf5/8BusaH1Yyy76qGI8atNdfP3sAsa0bojTPL4+mLBooX28iByu6bfTBU9zKg/RnKT/CaFFyRNoUg1EJhXFQgvzNO50T2E53uqYs1vd+DKr8bCGK+JXpxuHEleOueAUZfcr4R7wqIIb72ARndj1Iq2KHEv16gFVEmbXI2LUOrVeMVEGzlB8CWuf+tIEsW1jnf0+Mh6l5mb60LYMmBcDT5gFHJHmlJVokXSAJ/db3o08JxNzjYbZe3YjADKSfWJfg51KTdOFQd0l/FfTxU7doluK+tOx8DCeX57PCGUl0JYlzLwby4DyXJWpvWhLf5d9BM91GkgfS8hRcCPvUlJp7D/74CvxqjK5ih3SYEd4JB3s46riM2Wom6Pw=
@@ -32,5 +39,13 @@ deploy:
     tags: true
     distributions: sdist bdist_wheel
     repo: radiac/django-fastview
+    condition: '$TOXENV = py38-django3.0'
   skip_cleanup: true
-  skip_existing: true
+- provider: npm
+  email: git@radiac.net
+  api_key:
+    secure: tQXB6v1kTuc6ybhuhtTjak7LdntMDBCODvK8A8dAlosvvq6rznSZcDJMUvIxji04QDTxDvnAppaitJJZ8J74VRihnWIBG99FwwJaGY7P+B/t3VhS1DP1uN20k7/GjMI7aAn0LxH5MDV9nqPhvk1CWwBrFCqP6hI0rrdYCPbvl+XcUGwjaLK4V8GKFl+yBJcoh+b8xWxCScYXKwZznXv5LHvrIv+VVwRqD5nDcq8b9e+nCTbGKHN7OuexEdPmJHPSqvEUxlWHX69FitTQ8tKL+SFoOz7KCm0byac7ZLJJbKEhCuYlgzmVWPovwaeRo9iaHK9NMkZva/vMjI5hl5N7jhbSaCPK7QDt4LQYpjM9tYnm6qeKQWIbi0oaxp74gjoteH1trQu2b/APqe9YGmIrKQAzcBybW+HTwRLOj6l9/5jHOEbJLvzIUJGKlb4ArtuX9JotrW02wfI3zG4UOy9lZj+wKDmk1oNufbKQ5Ybi2CdjNFnzBmF13fJ8g2nn7WqcCpzB0XcDYKR30ZrgUxMOu8G+4uv94wfGPJ0apoR+VvVgvbvF13uKh55j8xr50+4rbULTLQLIF0eWFsQOSuDZmcFnZ2Ah8IoYY1A8Hl/AEgHqF1v4eE6MvmdX/MyrR9vG9nVE9kSbLFJ/OKQtGtB4XR7PTu7B/2wtinmmeMJtl3Y=
+  on:
+    tags: true
+    repo: radiac/django-fastview
+    condition: '$TOXENV = py38-django3.0'

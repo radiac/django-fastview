@@ -9,9 +9,8 @@ default templates will load them automatically; there is nothing more for you to
 
 If you want to customise the JavaScript by subclassing, or want to include it in your
 own bundle or build process, you can use the corresponding npm package. Both PyPI and
-npm releases follow semantic versioning of ``major.minor.patch``; the ``major.minor``
-versions will be released in sync, use the latest ``patch`` version available. See
-:ref:`js-customising` below when doing this.
+npm releases follow the same version numbering. See :ref:`js-customising` below when
+doing this.
 
 The bundle files are excluded from the repository, so if installing from git you will
 need to bundle it yourself - see :ref:`js-build-static` for more details.
