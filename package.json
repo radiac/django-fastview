@@ -1,6 +1,6 @@
 {
   "name": "django_fastview",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "JavaScript resources for Django Fastview",
   "homepage": "http://radiac.net/projects/django-fastview/",
   "repository": {

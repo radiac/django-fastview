@@ -43,6 +43,12 @@ are available by installing the master branch from github (see
 :ref:`installation_instructions` for details).
 
 
+0.0.3, 2020-02-10
+-----------------
+
+Adds inline formset support
+
+
 0.0.2, 2020-01-01
 -----------------
 
