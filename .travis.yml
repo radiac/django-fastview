@@ -22,7 +22,7 @@ before_deploy:
     nvm use &&
     yarn &&
     npm run build;
-  fi
+  fi;
   if [[ ! -e README.md ]]; then
     npm run prepackage;
   fi
