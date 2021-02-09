@@ -11,7 +11,14 @@ from django.views.generic.list import MultipleObjectMixin
 
 from .constants import INDEX_VIEW, OBJECT_VIEW, VIEW_SUFFIX
 from .permissions import Permission
-from .views import CreateView, DeleteView, DetailView, ListView, UpdateView
+from .views import (
+    AbstractFastView,
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    UpdateView,
+)
 
 
 if TYPE_CHECKING:
@@ -47,7 +54,10 @@ class ViewGroup:
         self._collect_views()
 
     def get_template_root(self) -> str:
-        return self.template_root or ""
+        """
+        Root path for templates for this view group
+        """
+        return self.template_root
 
     def _collect_views(self) -> None:
         """
@@ -89,7 +99,7 @@ class ViewGroup:
 
             # Check and store the view
             view = getattr(self, attr)
-            if isclass(view) and issubclass(view, View):
+            if isclass(view) and issubclass(view, AbstractFastView):
                 # Add attributes as necessary
                 attrs = self._get_view_attrs(name, view)
                 if attrs:

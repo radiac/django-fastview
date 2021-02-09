@@ -2,37 +2,6 @@
 
 {% block fastview_content %}
 
-{% for label, url in action_links %}
-  <p><a href="{{ url }}">{{ label }}</a></p>
-{% endfor %}
-
-<table>
-  <thead>
-    <tr>
-      {% for label in view.labels %}
-        <th>{{ label }}</th>
-      {% endfor %}
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for object in annotated_object_list %}
-    <tr>
-      {% for value in object.values %}
-        {% if forloop.first %}
-            <td>{% if object.can_detail %}<a href="{{ object.get_detail_url }}">{{ value }}</a>{% else %}{{ value }}{% endif %}</td>
-        {% else %}
-          <td>{{ value }}</td>
-        {% endif %}
-      {% endfor %}
-      <td>
-        {% for label, url in object.action_links %}
-          <a href="{{ url }}">{{ label }}</a>
-        {% endfor %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% include "fastview/fragments/list.html" %}
 
 {% endblock %}

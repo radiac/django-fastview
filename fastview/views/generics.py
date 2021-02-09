@@ -37,6 +37,10 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
         if self.list_permission:
             qs = self.list_permission.filter(request=self.request, queryset=qs)
 
+        # TODO: request.GET needs to be filtered and checked
+        if self.request.GET:
+            qs = qs.filter(**{k: v[0] for k, v in self.request.GET.items()})
+
         return qs
 
     def get_context_data(self, **kwargs):

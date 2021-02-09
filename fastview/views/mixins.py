@@ -10,9 +10,10 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import AutoField, Model
 from django.urls import reverse
+from django.utils.decorators import classonlymethod
 from django.utils.translation import gettext as _
 
-from ..constants import INDEX_VIEW
+from ..constants import INDEX_VIEW, TEMPLATE_FRAGMENT_SLUG
 from ..forms import InlineParentModelForm
 from ..permissions import Denied, Permission
 from .display import AttributeValue, DisplayValue
@@ -24,7 +25,36 @@ if TYPE_CHECKING:
     from .inlines import Inline
 
 
-class FastViewMixin(UserPassesTestMixin):
+class AbstractFastView(UserPassesTestMixin):
+    """
+    Mixin for a class-based view which supports FastView groups but does not render a
+    template
+    """
+
+    permission: Permission = Denied()
+    has_id_slug: bool = False
+
+    def get_test_func(self) -> Callable:
+        """
+        Tells the base class ``UserPassesTestMixin`` to call ``self.has_permission`` to
+        see if the user has access.
+        """
+        return self.has_permission
+
+    def has_permission(self) -> bool:
+        """
+        Check for permission to see this view based on ``self.permission``
+
+        Returns:
+            Whether or not the user has permission to see this view
+        """
+        if not self.permission:
+            return True
+
+        return self.permission.check(self.request)
+
+
+class FastViewMixin(AbstractFastView):
     """
     Mixin for class-based views to support FastView groups
 
@@ -50,27 +80,13 @@ class FastViewMixin(UserPassesTestMixin):
     # TODO: action is now only used for templates; rename to more appropriate var
     action: Optional[str] = None
     action_label: Optional[str] = None
-    permission: Permission = Denied()
-    has_id_slug: bool = False
 
-    def get_test_func(self) -> Callable:
-        """
-        Tells the base class ``UserPassesTestMixin`` to call ``self.has_permission`` to
-        see if the user has access.
-        """
-        return self.has_permission
+    _as_fragment = False
+    fragment_template_name = None
 
-    def has_permission(self) -> bool:
-        """
-        Check for permission to see this view based on ``self.permission``
-
-        Returns:
-            Whether or not the user has permission to see this view
-        """
-        if not self.permission:
-            return True
-
-        return self.permission.check(self.request)
+    def dispatch(self, request, *args, as_fragment=False, **kwargs):
+        self._as_fragment = as_fragment
+        return super().dispatch(request, *args, **kwargs)
 
     def get_template_names(self) -> List[str]:
         # Get default template names
@@ -79,11 +95,28 @@ class FastViewMixin(UserPassesTestMixin):
 
         # Look for a viewgroup action template
         if self.viewgroup:
-            extra.append(f"{self.viewgroup.get_template_root()}/{self.action}.html")
+            root = self.viewgroup.get_template_root()
+            if root:
+                extra.append(f"{root}/{self.action}.html")
 
         # Add in our default as a fallback
         extra.append(self.default_template_name)
-        return names + extra
+
+        names += extra
+        if not self._as_fragment:
+            return names
+
+        # Convert to use fragment templates
+        fragment_names = []
+        if self.fragment_template_name is not None:
+            fragment_names = [self.templatetag_template_name]
+
+        for name in names:
+            parts = name.split("/")
+            name = "/".join(parts[:-1] + [TEMPLATE_FRAGMENT_SLUG, parts[-1]])
+            fragment_names.append(name)
+
+        return fragment_names
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
