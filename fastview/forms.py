@@ -4,6 +4,7 @@ Form classes
 
 from typing import List
 
+from django.db import transaction
 from django.forms import BaseInlineFormSet, ModelForm
 from django.utils.translation import gettext as _
 
@@ -46,9 +47,11 @@ class InlineParentModelForm(ModelForm):
         If commit=False, add a save_formsets() method to the form which can be called
         after the instance is saved manually at a later time.
         """
-        instance = super().save(commit)
-        for formset in self.formsets:
-            formset.save(commit=commit)
+        with transaction.atomic():
+            instance = super().save(commit)
+            for formset in self.formsets:
+                formset.instance = instance
+                formset.save(commit=commit)
 
         return instance
 
