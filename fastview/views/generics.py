@@ -30,6 +30,14 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
     title = "{verbose_name_plural}"
     fields = [ObjectValue()]
     action = "list"
+    list_permission = None
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.list_permission:
+            qs = self.list_permission.filter(request=self.request, queryset=qs)
+
+        return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
