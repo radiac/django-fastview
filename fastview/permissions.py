@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Optional, Type
 
-from django.db.models import Model, Q, QuerySet
+from django.db.models import ManyToManyField, Model, Q, QuerySet
 from django.http import HttpRequest
 
 
@@ -48,7 +48,7 @@ class Permission:
                 an empty queryset
         """
         q = self.filter_q(request, queryset)
-        return queryset.filter(q)
+        return queryset.filter(q).distinct()
 
     def filter_q(self, request: HttpRequest, queryset: QuerySet) -> Q:
         """
@@ -314,12 +314,33 @@ class Owner(Permission):
     ) -> bool:
         if not instance or not request.user.is_authenticated:
             return False
-        owner_id = getattr(instance, f"{self.owner_field}_id")
-        if owner_id == request.user.pk:
-            return True
-        return False
+
+        # Simple lookup is quicker if possible
+        if "__" not in self.owner_field:
+            owner_id = getattr(instance, f"{self.owner_field}_id")
+            if owner_id == request.user.pk:
+                return True
+            return False
+
+        # Lookup over relationships
+        rel_field_name, rel_target = self.owner_field.split("__", 1)
+        rel_field = type(instance)._meta.get_field(rel_field_name)
+
+        # TODO this will be expensive for list views - prefetch?
+        if isinstance(rel_field, ManyToManyField):
+            rel_qs = getattr(instance, rel_field_name)
+            return rel_qs.filter(**{f"{rel_target}_id": request.user.pk}).exists()
+
+        # TODO Support 1:1, 1:m, m:1
+        raise NotImplementedError("Fastview doesn't support this relationship yet")
 
     def filter_q(self, request: HttpRequest, queryset: QuerySet) -> Q:
         if request.user.is_authenticated:
             return Q(**{self.owner_field: request.user})
         return Q_NONE
+
+    def filter(self, request: HttpRequest, queryset: QuerySet) -> QuerySet:
+        qs: QuerySet = super().filter(request, queryset)
+        if "__" in self.owner_field:
+            qs = qs.distinct()
+        return qs
