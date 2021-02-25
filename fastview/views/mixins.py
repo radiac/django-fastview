@@ -3,14 +3,13 @@ Mixins for fastviews
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Type, Union
 
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import AutoField, Model
 from django.urls import reverse
-from django.utils.decorators import classonlymethod
 from django.utils.translation import gettext as _
 
 from ..constants import INDEX_VIEW, TEMPLATE_FRAGMENT_SLUG
@@ -328,6 +327,7 @@ class DisplayFieldMixin(BaseFieldMixin):
     """
 
     fields: List[Union[str, DisplayValue]]
+    _slug_to_field: Dict[str, DisplayValue]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -335,12 +335,16 @@ class DisplayFieldMixin(BaseFieldMixin):
         display_values: List[DisplayValue] = []
         field_names = [field.name for field in self.model._meta.get_fields()]
 
+        # Convert field names to DisplayValue instances, and build slug lookup table
+        self._slug_to_field = {}
         for field in self.fields:
             if not isinstance(field, DisplayValue):
                 if field not in field_names:
                     raise ValueError(f'Unknown field "{field}"')
                 field = AttributeValue(field)
             display_values.append(field)
+
+            self._slug_to_field[field.get_slug(view=self)] = field
         self.fields = display_values
 
     @property

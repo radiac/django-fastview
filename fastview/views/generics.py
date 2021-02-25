@@ -4,9 +4,13 @@ Generic views for FastView
 
 from __future__ import annotations
 
+from typing import Dict, Optional
+
 from django.views import generic
 
+from ..constants import PARAM_LIMIT, PARAM_ORDER
 from .display import ObjectValue
+from .filters import Filter
 from .mixins import (
     DisplayFieldMixin,
     FormFieldMixin,
@@ -31,15 +35,52 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
     fields = [ObjectValue()]
     action = "list"
     list_permission = None
+    filters: Optional[Dict[str, Filter]] = None
 
     def get_queryset(self):
         qs = super().get_queryset()
+
+        # Only show permitted objects
         if self.list_permission:
             qs = self.list_permission.filter(request=self.request, queryset=qs)
 
-        # TODO: request.GET needs to be filtered and checked
         if self.request.GET:
-            qs = qs.filter(**{k: v[0] for k, v in self.request.GET.items()})
+            # Filter
+            if self.filters is not None:
+                for param_name, filter_obj in self.filters.items():
+                    if param_name in self.request.GET:
+                        qs = filter_obj.process(qs, self.request.GET[param_name])
+
+            # Order
+            if PARAM_ORDER in self.request.GET:
+                # Validate slugs, get Display objects, and build list of order fields
+                slugs = self.request.GET[PARAM_ORDER].split(",")
+                order_fields = []
+                for slug in slugs:
+                    order = ""
+                    if slug.startswith("-"):
+                        order = "-"
+                        slug = slug[1:]
+                    if slug not in self._slug_to_field:
+                        raise ValueError(f"Invalid order field {slug}")
+                    field_name = self._slug_to_field[slug].get_order_by()
+                    order_fields.append(f"{order}{field_name}")
+
+                qs = qs.order_by(*order_fields)
+
+            # Limit the queryset
+            limit = self.request.GET.get(PARAM_LIMIT, 0)
+            if limit:
+                try:
+                    limit = int(limit)
+                except ValueError:
+                    limit = 0
+
+                # Ensure positive limit (or 0)
+                limit = max(0, limit)
+
+                if limit:
+                    qs = qs[:limit]
 
         return qs
 

@@ -2,7 +2,7 @@
 Django Fastview
 ===============
 
-Build admin-style views with minimal code.
+Build CRUD sites with minimal code and lots of features.
 
 .. image:: https://travis-ci.org/radiac/django-fastview.svg?branch=master
     :target: https://travis-ci.org/radiac/django-fastview
@@ -30,6 +30,9 @@ access each view, and provides default templates to get you up and running quick
 
 It supports inline formsets, with an optional customisable JavaScript library to manage
 the UI.
+
+It also provides fragment support, allowing you to render partial views in other
+templates.
 
 Note: this is an alpha release; expect feature and API changes in future versions. Check
 upgrade notes for instructions when upgrading.

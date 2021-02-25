@@ -6,17 +6,40 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Optional
 
 from django.db.models import Model
+from django.utils.text import slugify
 
 
 if TYPE_CHECKING:
     from .mixins import DisplayFieldMixin
 
 
+def snake_slugify(value: str) -> str:
+    return slugify(value).replace("-", "_")
+
+
 class DisplayValue:
     def get_label(self, view: DisplayFieldMixin) -> str:
+        """
+        Return a label for this field
+        """
         raise NotImplementedError()
 
+    def get_slug(self, view: DisplayFieldMixin) -> str:
+        """
+        Return a slug for this field, for use in ordering
+        """
+        return snake_slugify(self.get_label(view))
+
     def get_value(self, instance: Model) -> Any:
+        """
+        Return the value as a safe HTML string
+        """
+        raise NotImplementedError()
+
+    def order_by(self) -> str:
+        """
+        Return the value as a safe HTML string
+        """
         raise NotImplementedError()
 
 
@@ -45,10 +68,23 @@ class AttributeValue(DisplayValue):
         #   format numbers (should return a str)
         return getattr(instance, self.attribute)
 
+    def get_order_by(self) -> str:
+        """
+        Return field name for order_by(..)
+        """
+        return self.attribute
+
 
 class ObjectValue(DisplayValue):
+    """
+    Return the string representation of the object
+    """
+
     def get_label(self, view: DisplayFieldMixin) -> str:
         return view.model._meta.verbose_name.title
 
     def get_value(self, instance: Model) -> Any:
         return str(instance)
+
+    def get_order_by(self) -> str:
+        return "pk"

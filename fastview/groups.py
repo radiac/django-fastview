@@ -53,7 +53,7 @@ class ViewGroup:
 
         self._collect_views()
 
-    def get_template_root(self) -> str:
+    def get_template_root(self) -> Optional[str]:
         """
         Root path for templates for this view group
         """

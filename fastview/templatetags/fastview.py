@@ -1,15 +1,10 @@
-from typing import Union
-
 from django import template
 from django.template import TemplateSyntaxError
 from django.template.base import token_kwargs
 from django.template.response import SimpleTemplateResponse
 from django.test import RequestFactory
 from django.urls import resolve, reverse
-from django.utils.module_loading import import_string
 from django.utils.safestring import mark_safe
-
-from ..groups import ViewGroup
 
 
 register = template.Library()
@@ -17,6 +12,15 @@ register = template.Library()
 
 @register.tag
 def fragment(parser, token):
+    """
+    Render a fragment view
+
+    Usage::
+
+        {% fragment "view_name" %}
+        {% fragment "view_name" positional=arg keyword=arg ? param=value %}
+
+    """
     bits = token.split_contents()
     tag_name = bits.pop(0)
     if len(bits) < 1:
