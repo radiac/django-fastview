@@ -2,7 +2,7 @@
 Django Fastview
 ===============
 
-Build CRUD sites with minimal code and lots of features.
+Build views to manage model data, with minimal code and lots of features.
 
 .. image:: https://travis-ci.org/radiac/django-fastview.svg?branch=master
     :target: https://travis-ci.org/radiac/django-fastview
@@ -18,21 +18,20 @@ Build CRUD sites with minimal code and lots of features.
 Overview
 ========
 
-Django admin is great for creating quick CRUD views for admin users, but is not suitable
-for end users.
+Fastview is like Django admin for your user-facing site:
 
-Fastview is inspired by Django admin - write code to manage objects in a few lines,
-using groups of standard generic views which can be supplemented, overridden or replaced
-as necessary, and styled and tied into the rest of your site.
+* quickly create sets of views to manage models (list, read, create, update and delete)
+* support for inline formsets
+* permission-based access
 
-Fastview adds a layer of access control to make it straightforward to manage who can
-access each view, and provides default templates to get you up and running quickly.
 
-It supports inline formsets, with an optional customisable JavaScript library to manage
-the UI.
+But it is more flexible and powerful than Django admin:
 
-It also provides fragment support, allowing you to render partial views in other
-templates.
+* uses generic views so it's easy to customise and extend
+* has default templates which can be easily customised or replaced
+* is easy to style to fit into the rest of your site
+* permissions are optional and easy to extend to row-level object checks
+* provides fragment support for partial renders in other pages
 
 Note: this is an alpha release; expect feature and API changes in future versions. Check
 upgrade notes for instructions when upgrading.
