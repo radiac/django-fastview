@@ -84,3 +84,11 @@ In no particular order:
 * List and detail view: improved support for different field types
 * Create and update views: improved support for relations, support for inline formsets
 * Delete view: support for listing cascaded deletes
+
+
+Credits
+=======
+
+Thanks to all contributors who are listed in ``fastview.__credits__``.
+
+The icons are from Remix Icon, https://remixicon.com/

@@ -1,0 +1,159 @@
+$fastview-fieldset-odd-bg: #eee !default;
+$fastview-fieldset-even-bg: #ddd !default;
+$fastview-fieldset-delete-width: 50px;
+$fastview-fieldset-delete-fg: #aaa !default;
+$fastview-fieldset-delete-bg: transparent !default;
+$fastview-fieldset-delete-fg-hover: #fff !default;
+$fastview-fieldset-delete-bg-hover: #a22 !default;
+$fastview-fieldset-delete-fg-active: #eee !default;
+$fastview-fieldset-delete-bg-active: #822 !default;
+$fastview-fieldset-padding: 0.25rem 1rem !default;
+$fastview-fieldset-add-padding: 1rem !default;
+$fastview-fieldset-add-fg: #444 !default;
+$fastview-fieldset-add-bg: #ccc !default;
+$fastview-fieldset-add-fg-hover: #fff !default;
+$fastview-fieldset-add-bg-hover: #2a2 !default;
+
+fieldset.fastview.formset__form {
+  padding: $fastview-fieldset-padding;
+  overflow: hidden;
+
+  &:nth-child(odd) {
+    background: $fastview-fieldset-odd-bg;
+  }
+  &:nth-child(even) {
+    background: $fastview-fieldset-even-bg;
+  }
+
+  &.js-enabled {
+    // Move the delete button to the RHS and restyle
+    position: relative;
+    padding-right: $fastview-fieldset-delete-width + ($fastview-fieldset-delete-width * 0.2);
+
+    // Delete button is last child
+    p:last-child {
+    transition: width 0.25s ease-in-out;
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: $fastview-fieldset-delete-width;
+      margin: 0;
+
+      label {
+        background-color: $fastview-fieldset-delete-bg;
+
+        &, &::before {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+          text-indent: -999rem;
+        }
+
+        &::before {
+          content: ' ';
+          background-color: $fastview-fieldset-delete-fg;
+          mask-image: url('delete-bin-6-line.svg');
+          mask-position: center;
+          mask-repeat: no-repeat;
+        }
+
+        &:hover {
+          background: $fastview-fieldset-delete-bg-hover;
+          cursor: pointer;
+
+          &::before {
+            background-color: $fastview-fieldset-delete-fg-hover;
+          }
+        }
+      }
+
+      input[name$="-DELETE"] {
+        display: none;
+      }
+    }
+
+    // Style for deleted
+    &.deleted {
+      p:not(:last-child) {
+        opacity: 0.25;
+      }
+      p:last-child {
+        width: 100%;
+
+        label {
+          background: $fastview-fieldset-delete-bg-active;
+
+          &::before {
+            background-color: $fastview-fieldset-delete-fg-active;
+          }
+
+          &:hover {
+            background: $fastview-fieldset-delete-bg-hover;
+
+            &::before {
+              background-color: $fastview-fieldset-delete-fg-hover;
+            }
+          }
+        }
+      }
+    }
+
+    // Animate new formset
+    &.added {
+      animation: add-new 0.5s ease-in-out;
+    }
+    @keyframes add-new {
+      0% {
+        max-height: 0;
+      }
+      99% {
+        // Needs to expand to a fixed size; aim for taller than the viewport
+        max-height: 2000px;
+      }
+      100% {
+        max-height: auto;
+      }
+    }
+  }
+}
+
+fieldset.fastview.formset__root {
+
+  // Restyle the add button
+  button.fastview-add {
+    border: 0;
+    width: 100%;
+    padding: $fastview-fieldset-add-padding;
+    background: $fastview-fieldset-add-bg;
+    position: relative;
+    overflow: hidden;
+    text-indent: -999rem;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: $fastview-fieldset-add-fg;
+      mask-image: url('add-circle-fill.svg');
+      mask-position: center;
+      mask-repeat: no-repeat;
+    }
+
+
+    &:hover {
+      background: $fastview-fieldset-add-bg-hover;
+      cursor: pointer;
+
+      &::before {
+        background-color: $fastview-fieldset-add-fg-hover;
+      }
+    }
+  }
+}

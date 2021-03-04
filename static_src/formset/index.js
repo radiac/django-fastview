@@ -16,6 +16,8 @@ class Form {
     this.rootEl = rootEl;
     this.prefix = prefix;
 
+    // Set a flag so CSS can change its layout
+    this.rootEl.classList.add("js-enabled");
     this.deleteEl = this.getDeleteEl();
     this.deleteCon = this.getDeleteCon();
     this.render();
@@ -26,6 +28,7 @@ class Form {
     if (!checkbox) {
       return;
     }
+
     checkbox.onchange = () => {
       if (checkbox.checked) {
         this.deleted();
@@ -48,10 +51,16 @@ class Form {
   }
 
   deleted() {
+    /**
+     * Notify the formset that the form has been deleted
+     */
     this.formset.deletedForm(this);
   }
 
   undeleted() {
+    /**
+     * Notify the formset that the form has been added
+     */
     this.formset.addedForm(this);
   }
 
@@ -62,14 +71,18 @@ class Form {
   render() {
     /**
      * Render the form whenever there is a change to delete state
-     *
-     * Hides and shows the delete field
      */
     if (!this.deleteCon) {
       return;
     }
+
+    // Update root style for CSS
+    this.rootEl.classList.toggle("deleted", this.isDeleted);
+
+    // Show or hide the delete button
     if (this.formset.canDelete) {
       this.deleteCon.style.removeProperty('display');
+
     } else {
       this.deleteCon.style.setProperty('display', 'none');
     }
@@ -95,7 +108,8 @@ export class Formset {
     this.numFormsMin = parseInt(document.getElementById(`id_${prefix}-MIN_NUM_FORMS`).value, 10);
     this.numFormsMax = parseInt(document.getElementById(`id_${prefix}-MAX_NUM_FORMS`).value, 10);
 
-    this.nextId = this.numForms + 1;
+    // Forms are 0-indexed, so last ID is num-1
+    this.nextId = this.numForms;
 
     // Find existing forms
     let formEls = rootEl.querySelectorAll(`[data-${this.dataForm}]`);
@@ -122,6 +136,7 @@ export class Formset {
     let button = document.createElement('button');
     button.innerHTML = 'Add';
     button.type = 'button';
+    button.className = 'fastview-add';
     this.rootEl.appendChild(button);
     button.onclick = () => {
       this.addForm();
@@ -143,6 +158,7 @@ export class Formset {
     // Create and insert
     let formRoot = this.createForm(id);
     let newForm = this.insertForm(id, formRoot);
+    this.nextId += 1;
 
     // Notify handlers
     this.addedForm(newForm);
@@ -179,13 +195,15 @@ export class Formset {
     let template = this.template.innerHTML;
     let formHtml = template.replace(/__prefix__/g, id);
     let formRoot = this.template.cloneNode();
+
+    formRoot.classList.add('added');
     formRoot.removeAttribute("style");
     formRoot.innerHTML = formHtml;
 
     return formRoot
   }
 
-  insertForm(id,formRoot) {
+  insertForm(id, formRoot) {
     /**
      * Insert the new form into the formset
      */

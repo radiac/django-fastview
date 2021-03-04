@@ -13,7 +13,7 @@
     <h2>{{ formset.title }}</h2>
     {{ formset.management_form }}
 
-    <fieldset style="display: none" data-fastview-formset-template="{{ formset.empty_form.prefix }}">
+    <fieldset style="display: none" class="fastview formset__form" data-fastview-formset-template="{{ formset.empty_form.prefix }}">
       {{ formset.empty_form.as_p }}
     </fieldset>
 
@@ -29,7 +29,11 @@
   </fieldset>
   {% endfor %}
 
-  <input type="submit" value="Save">
+  {% block fastview_submit %}
+    <div class="fastview-submit">
+      <input type="submit" value="Save">
+    </div>
+  {% endblock %}
 </form>
 
 {% endblock %}
