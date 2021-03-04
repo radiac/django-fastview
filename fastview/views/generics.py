@@ -34,15 +34,15 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
     title = "{verbose_name_plural}"
     fields = [ObjectValue()]
     action = "list"
-    list_permission = None
+    row_permission = None
     filters: Optional[Dict[str, Filter]] = None
 
     def get_queryset(self):
         qs = super().get_queryset()
 
         # Only show permitted objects
-        if self.list_permission:
-            qs = self.list_permission.filter(request=self.request, queryset=qs)
+        if self.row_permission:
+            qs = self.row_permission.filter(request=self.request, queryset=qs)
 
         if self.request.GET:
             # Filter
