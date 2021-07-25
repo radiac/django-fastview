@@ -34,6 +34,7 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
     title = "{verbose_name_plural}"
     fields = [ObjectValue()]
     action = "list"
+    action_label = "List"
     row_permission = None
     filters: Optional[Dict[str, Filter]] = None
 
@@ -52,21 +53,9 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
                         qs = filter_obj.process(qs, self.request.GET[param_name])
 
             # Order
-            if PARAM_ORDER in self.request.GET:
-                # Validate slugs, get Display objects, and build list of order fields
-                slugs = self.request.GET[PARAM_ORDER].split(",")
-                order_fields = []
-                for slug in slugs:
-                    order = ""
-                    if slug.startswith("-"):
-                        order = "-"
-                        slug = slug[1:]
-                    if slug not in self._slug_to_field:
-                        raise ValueError(f"Invalid order field {slug}")
-                    field_name = self._slug_to_field[slug].get_order_by()
-                    order_fields.append(f"{order}{field_name}")
-
-                qs = qs.order_by(*order_fields)
+            ordering = self.get_ordering()
+            if ordering:
+                qs = qs.order_by(*ordering)
 
             # Limit the queryset
             limit = self.request.GET.get(PARAM_LIMIT, 0)
@@ -83,6 +72,28 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
                     qs = qs[:limit]
 
         return qs
+
+    def get_ordering(self):
+        """
+        Order by the CSV list in the query string parameter PARAM_ORDER
+        """
+        if PARAM_ORDER not in self.request.GET:
+            return None
+
+        # Validate slugs, get Display objects, and build list of order fields
+        slugs = self.request.GET[PARAM_ORDER].split(",")
+        ordering = []
+        for slug in slugs:
+            order = ""
+            if slug.startswith("-"):
+                order = "-"
+                slug = slug[1:]
+            if slug not in self._slug_to_field:
+                raise ValueError(f"Invalid order field {slug}")
+            field_name = self._slug_to_field[slug].get_order_by()
+            ordering.append(f"{order}{field_name}")
+
+        return ordering
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -126,6 +137,7 @@ class DetailView(DisplayFieldMixin, ObjectFastViewMixin, generic.DetailView):
     default_template_name = "fastview/detail.html"
     has_id_slug = True
     action = "view"
+    action_label = "View"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -144,6 +156,7 @@ class CreateView(
     title = "{action} {verbose_name}"
     default_template_name = "fastview/create.html"
     action = "create"
+    action_label = "Add"
 
 
 class UpdateView(
@@ -156,7 +169,8 @@ class UpdateView(
     title = "{action} {verbose_name}"
     default_template_name = "fastview/update.html"
     has_id_slug = True
-    action = "upoate"
+    action = "update"
+    action_label = "Change"
 
 
 class DeleteView(SuccessUrlMixin, ObjectFastViewMixin, generic.DeleteView):
@@ -164,3 +178,4 @@ class DeleteView(SuccessUrlMixin, ObjectFastViewMixin, generic.DeleteView):
     default_template_name = "fastview/delete.html"
     has_id_slug = True
     action = "delete"
+    action_label = "Delete"

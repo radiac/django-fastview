@@ -29,7 +29,7 @@ bit more functionality.
 All Fastview views have the following additional attributes:
 
 * ``title = "view title"`` - used for templates
-* ``permission = Permission()`` - used to control access - see `permissions`_
+* ``permission = Permission()`` - used to control access - see :ref:`permissions`
 * template names default to ``fastview/<action>.html`` - eg ``Create``'s default
   template is ``fastview/create.html``. Override as normal by setting ``template_name``.
 
@@ -112,51 +112,6 @@ To use a custom view in a ``ViewGroup``, your view shold subclass
 which operate on a model.
 
 
-.. _permissions:
-
-Permissions
------------
-
-Fastview's generic views default to permission ``Disabled``. To override this you can
-subclass the view and set ``permission`` directly::
-
-    from fastview import permissions
-
-    class NewBlog(CreateView):
-        permission = permissions.Login()
-
-Or set it on the viewgroup with a ``permissions`` map::
-
-    permissions = {
-        "index": permissions.Login()
-    }
-
-Complex permissions can be defined as variables and reused across multiple views or
-groups.
-
-Fastview provides the following permissions:
-
-* ``Denied()`` - nobody can access
-* ``Public()`` - everyone can access
-* ``Login()`` - user must be logged in
-* ``Staff()`` - user object must be set as staff
-* ``Superuser()`` - user must be a superuser
-* ``Django(action)`` (for model views) - use Django's permission framework. For example,
-  to see if the user has been given the permission ``blog.add_blog`` you would use
-  ``Django("add")`` on the model view.
-* ``Owner(owner_field)`` (for model views) - user must be the owner (where
-  ``owner_field`` specifies the user who owns the instance). For example, if
-  ``Blog.owner = request.user``, use ``Owner("owner")`` on the model view.
-
-Permissions can be combined with AND, OR and NOT operators (using the same syntax as
-``Q`` objects):
-
-* ``Staff() | Owner("owner")`` - either staff or the owner
-* ``Staff() & Owner("owner")`` - only the owner, and only if they are staff
-* ``Staff() & ~Owner("owner")`` - staff who are not the owner
-
-To write a custom permission, subclass ``fastview.permissions.Permission`` and implement
-your own ``check()`` and ``filter_q()`` methods.
 
 
 .. _display fields:

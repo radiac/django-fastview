@@ -22,6 +22,31 @@ Instructions
    the latest version
 
 
+.. _upgrade_0-0-3:
+
+Upgrading from 0.0.3
+--------------------
+
+Viewgroup ``permissions`` are now managed through ``View.config`` and the dict shortcut.
+
+For example, change the old permission dict::
+
+    class BlogViewGroup(ModelViewGroup):
+        permissions = {
+            "index": Public(),
+            "detail": Public()
+        }
+
+to an explicit or shortcut view configuration::
+
+    class BlogViewGroup(ModelViewGroup):
+        index_view = views.ListView.config(permission=Public())
+        detail_view = dict(permission=Public())
+
+
+See :ref:`permissions` for more details.
+
+
 .. _upgrade_0-0-1:
 
 Upgrading from 0.0.1
@@ -41,6 +66,19 @@ links to the instructions above.
 Changes for upcoming releases will be listed without a release date - these
 are available by installing the master branch from github (see
 :ref:`installation_instructions` for details).
+
+
+0.0.4, 2021-07-
+-----------------
+
+Feature:
+
+* Support for list view filtering and ordering
+* Ability to embed fastviews as fragments in other pages
+
+Changes:
+
+* Permissions and other view overrides are now managed through View.config()
 
 
 0.0.3, 2020-02-10

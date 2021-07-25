@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional
 
-from django.db.models import Model
+from django.db.models import Manager, Model
 from django.utils.text import slugify
 
 
@@ -66,7 +66,10 @@ class AttributeValue(DisplayValue):
         #   map booleans to icons - render a template, or format a settings string
         #   newline textfields
         #   format numbers (should return a str)
-        return getattr(instance, self.attribute)
+        value = getattr(instance, self.attribute)
+        if isinstance(value, Manager):
+            value = "\n".join(str(obj) for obj in value.all())
+        return value
 
     def get_order_by(self) -> str:
         """

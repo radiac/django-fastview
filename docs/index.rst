@@ -14,6 +14,7 @@ Contents
     :maxdepth: 2
 
     get_started
+    permissions
     javascript
     upgrading
     contributing

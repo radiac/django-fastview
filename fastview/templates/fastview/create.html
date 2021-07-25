@@ -1,4 +1,5 @@
 {% extends "fastview/base.html" %}
+{% load fastview %}
 
 {% block fastview_content %}
 
@@ -9,7 +10,7 @@
   </fieldset>
 
   {% for formset in form.formsets %}
-  <fieldset class="fastview formset__root" data-fastview-formset="{{ formset.prefix }}">
+  <fieldset class="fastview formset__root" data-fastview-formset="{{ formset.prefix }}" data-fastview-formset-pk="{{ formset|formset_pk_name }}">
     <h2>{{ formset.title }}</h2>
     {{ formset.management_form }}
 

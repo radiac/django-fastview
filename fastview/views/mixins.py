@@ -3,7 +3,7 @@ Mixins for fastviews
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Type, Union, cast
 
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -20,7 +20,7 @@ from .objects import AnnotatedObject
 
 
 if TYPE_CHECKING:
-    from ..viewgroup import ViewGroup
+    from ..groups import ViewGroup
     from .inlines import Inline
 
 
@@ -30,8 +30,26 @@ class AbstractFastView(UserPassesTestMixin):
     template
     """
 
-    permission: Permission = Denied()
+    viewgroup: Optional[ViewGroup] = None
+    permission: Optional[Permission] = None
     has_id_slug: bool = False
+
+    @classmethod
+    def config(cls, **attrs: Dict[str, Any]) -> AbstractFastView:
+        """
+        Creates a new subclass of this View, with the attributes provided
+        """
+        # Collect attrs from the view and its bases
+        base_attrs = {}
+        mro = cls.mro()
+        mro.reverse()
+        for base_cls in mro:
+            base_attrs.update(vars(base_cls))
+
+        # Create a subclass of the original view with the new attributes
+        # cast because type inference can't tell we'll subclassing ourselves
+        view = cast(AbstractFastView, type(cls.__name__, (cls,), attrs))
+        return view
 
     def get_test_func(self) -> Callable:
         """
@@ -40,17 +58,34 @@ class AbstractFastView(UserPassesTestMixin):
         """
         return self.has_permission
 
-    def has_permission(self) -> bool:
+    @classmethod
+    def get_permission(cls) -> Permission:
         """
-        Check for permission to see this view based on ``self.permission``
+        Check for permission to see this view
+
+        If no ``permission`` attribute is defined on this view or its base classes, it
+        will check the ``permission`` attribute of its ``viewgroup``. If that is not
+        set, the permission check will default to ``False``, preventing access.
 
         Returns:
             Whether or not the user has permission to see this view
         """
-        if not self.permission:
-            return True
+        # Default to no access
+        permission: Permission = Denied()
 
-        return self.permission.check(self.request)
+        # Try our permission
+        if cls.permission:
+            permission = cls.permission
+
+        # Try viewgroup's permission
+        if cls.viewgroup and hasattr(cls.viewgroup, "permission"):
+            permission = cls.viewgroup.permission or permission
+
+        return permission
+
+    def has_permission(self) -> bool:
+        permission = self.__class__.get_permission()
+        return permission.check(self.request)
 
 
 class FastViewMixin(AbstractFastView):
@@ -75,8 +110,7 @@ class FastViewMixin(AbstractFastView):
     """
 
     title: str = "{action}"
-    viewgroup: Optional[ViewGroup] = None
-    # TODO: action is now only used for templates; rename to more appropriate var
+    # TODO: action is name it's registered on viewgroup; rename to more appropriate var
     action: Optional[str] = None
     action_label: Optional[str] = None
 
@@ -247,7 +281,9 @@ class BaseFieldMixin:
         """
         super().__init__(*args, **kwargs)
 
-        exclude = getattr(self, "exclude", [])
+        exclude = getattr(self, "exclude", None)
+        if exclude is None:
+            self.exclude = exclude = []
 
         if getattr(self, "fields", None):
             if exclude:
@@ -261,8 +297,6 @@ class BaseFieldMixin:
                 and field.editable is True
                 and field.name not in exclude
             ]
-
-        self.exclude = exclude
 
 
 class FormFieldMixin(BaseFieldMixin):

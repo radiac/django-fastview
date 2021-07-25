@@ -4,7 +4,19 @@ from django.db import models
 from django.forms import fields
 
 
-class Filter:
+class BaseFilter:
+    """
+    Abstract base filter with methods all filters must implement
+    """
+
+    def process(self, qs: models.QuerySet, value: Any) -> models.QuerySet:
+        """
+        Filter the queryset
+        """
+        raise NotImplementedError()
+
+
+class Filter(BaseFilter):
     """
     Filter queryset based on a value
     """
@@ -37,7 +49,7 @@ class Filter:
     def get_field_options(self):
         return {}
 
-    def process(self, qs: models.QuerySet, value: Any):
+    def process(self, qs: models.QuerySet, value: Any) -> models.QuerySet:
         field = self.get_field()
         cleaned = field.clean(value)
         qs = qs.filter(**self.get_filter_kwargs(cleaned))

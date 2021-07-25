@@ -10,6 +10,11 @@ from django.utils.safestring import mark_safe
 register = template.Library()
 
 
+@register.filter
+def formset_pk_name(formset):
+    return formset.model._meta.pk.name
+
+
 @register.tag
 def fragment(parser, token):
     """
@@ -18,7 +23,7 @@ def fragment(parser, token):
     Usage::
 
         {% fragment "view_name" %}
-        {% fragment "view_name" positional=arg keyword=arg ? param=value %}
+        {% fragment "view_name" positional_arg keyword=arg ? param=value %}
 
     """
     bits = token.split_contents()

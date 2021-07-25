@@ -5,7 +5,7 @@
 const defaultDataFormset = 'fastview-formset';
 const defaultDataForm = 'fastview-formset-form';
 const defaultDataTemplate = 'fastview-formset-template';
-
+const defaultDataPk = 'fastview-formset-pk';
 
 class Form {
   /**
@@ -18,9 +18,39 @@ class Form {
 
     // Set a flag so CSS can change its layout
     this.rootEl.classList.add("js-enabled");
+
     this.deleteEl = this.getDeleteEl();
     this.deleteCon = this.getDeleteCon();
     this.render();
+  }
+
+  isExtra(fieldDefaults, pkName) {
+    /**
+     * Check if this is an extra form which can be removed on page load
+     *
+     * Extra forms have the same values as the template, and have no ID
+     */
+
+    // See if all field elements are empty (default)
+    const fields = Array.from(this.rootEl.querySelectorAll('input, select, textarea'));
+    const hasContent = fields.some(
+      fieldEl => {
+        // Return true if the field has a non-default value
+        const fieldName = fieldEl.name.replace(`${this.prefix}-`, '');
+        if (fieldName == pkName && fieldEl.value) {
+          // PK is set
+          return true;
+        }
+        if (fieldName in fieldDefaults && fieldEl.value == fieldDefaults[fieldName]) {
+          // Field is known and value is default
+          return false;
+        };
+        // Unexpected value
+        return true;
+      }
+    );
+    // We're checking if it's empty
+    return !hasContent;
   }
 
   getDeleteEl() {
@@ -96,6 +126,7 @@ export class Formset {
 
   dataForm = defaultDataForm;
   dataTemplate = defaultDataTemplate;
+  dataPk = defaultDataPk;
   formClass = Form;
 
   constructor(rootEl, prefix) {
@@ -104,25 +135,66 @@ export class Formset {
 
     // Find management form
     this.totalFormsEl = document.getElementById(`id_${prefix}-TOTAL_FORMS`);
-    this.initialForms = document.getElementById(`id_${prefix}-INITIAL_FORMS`);
+    this.initialFormsEl = document.getElementById(`id_${prefix}-INITIAL_FORMS`);
     this.numFormsMin = parseInt(document.getElementById(`id_${prefix}-MIN_NUM_FORMS`).value, 10);
     this.numFormsMax = parseInt(document.getElementById(`id_${prefix}-MAX_NUM_FORMS`).value, 10);
 
-    // Forms are 0-indexed, so last ID is num-1
-    this.nextId = this.numForms;
-
-    // Find existing forms
-    let formEls = rootEl.querySelectorAll(`[data-${this.dataForm}]`);
-    this.forms = []
-    formEls.forEach(formEl => {
-      let formPrefix = formEl.getAttribute(`data-${this.dataForm}`);
-      let form = new this.formClass(this, formEl, formPrefix);
-      this.forms.push(form);
-    });
+    // Collect other metadata
+    const pkName = rootEl.getAttribute(`data-${this.dataPk}`);
 
     // Find template form
     this.template = rootEl.querySelector(`[data-${this.dataTemplate}]`);
     this.templatePrefix = this.template.getAttribute(`data-${this.dataTemplate}`);
+
+    // Find existing forms; reverse them so we can discard empty from the end
+    const formEls = Array.from(
+      rootEl.querySelectorAll(`[data-${this.dataForm}]`)
+    ).reverse();
+
+    // Update total number of forms - this may have changed if the page wsa refreshed
+    this.numForms = formEls.length;
+
+    // We're removing if we have empty extra forms
+    const initialForms = parseInt(this.initialFormsEl.value, 10);
+    let removing = (this.numForms > initialForms);
+
+    // Build list of template fields so we can see which values have changed
+    const fieldDefaults = {};
+    if (removing) {
+      Array.from(this.template.querySelectorAll('input, select, textarea')).forEach(
+        fieldEl => {
+          const fieldName = fieldEl.name.replace(`${this.templatePrefix}-`, '');
+          fieldDefaults[fieldName] = fieldEl.value;
+        }
+      );
+    }
+
+    // Build list of form class instances for active forms
+    this.forms = []
+    formEls.forEach(formEl => {
+      let formPrefix = formEl.getAttribute(`data-${this.dataForm}`);
+      let form = new this.formClass(this, formEl, formPrefix);
+
+      // Try to remove extra empty forms from the end
+      if (removing) {
+        if (form.isExtra(fieldDefaults, pkName)) {
+          formEl.remove();
+          this.numForms -= 1;
+
+          formEl.dispatchEvent(
+            new CustomEvent(
+              'fastview-formset-destroyForm',
+              {bubbles: true, detail: {formset: this, form: form}},
+            )
+          );
+          return;
+        }
+      }
+
+      // Keep
+      this.forms.push(form);
+    });
+    this.forms.reverse();
 
     // Find add button
     this.addEl = this.getAddEl();
@@ -158,10 +230,16 @@ export class Formset {
     // Create and insert
     let formRoot = this.createForm(id);
     let newForm = this.insertForm(id, formRoot);
-    this.nextId += 1;
 
     // Notify handlers
     this.addedForm(newForm);
+
+    formRoot.dispatchEvent(
+      new CustomEvent(
+        'fastview-formset-createForm',
+        {bubbles: true, detail: {formset: this, form: newForm}},
+      )
+    );
   }
 
   render() {
@@ -185,6 +263,11 @@ export class Formset {
 
   set numForms(value) {
     this.totalFormsEl.value = value;
+  }
+
+  get nextId() {
+    // Forms are 0-indexed, so last ID is num-1
+    return this.numForms;
   }
 
   createForm(id) {
@@ -229,9 +312,21 @@ export class Formset {
      */
     this.numForms += 1
     this.render();
+    form.rootEl.dispatchEvent(
+      new CustomEvent(
+        'fastview-formset-addForm',
+        {bubbles: true, detail: {formset: this, form: form}},
+      )
+    );
   }
 
   deletedForm(form) {
+    form.rootEl.dispatchEvent(
+      new CustomEvent(
+        'fastview-formset-deleteForm',
+         {bubbles: true, detail: {formset: this, form: form}},
+      )
+    );
     this.numForms -= 1
     this.render();
   }

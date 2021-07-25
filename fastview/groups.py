@@ -26,7 +26,45 @@ if TYPE_CHECKING:
     from django.urls.resolvers import CheckURLMixin
 
 
-class ViewGroup:
+class ViewGroupType(type):
+    def __new__(cls, name, bases, dct):
+        """
+        Resolve view configuration dicts into View.config() responses
+
+        This cannot easily be done from ViewGroup._collect_views, as at that point we'd
+        have to manually navigate the MRO and keep applying config dicts as we find
+        them. This way we can just look at the immediate bases
+        """
+        for attr, view in dct.items():
+            # Collect view name from attr
+            if not attr.endswith(VIEW_SUFFIX):
+                continue
+
+            name = attr[: -len(VIEW_SUFFIX)]
+
+            if isinstance(view, dict):
+                # We've found a config, look for the view class defined on a base class
+                config = view
+                base_view = None
+                for base in bases:
+                    base_view = getattr(base, attr, None)
+                    if not isinstance(base_view, AbstractFastView):
+                        continue
+
+                # Unexpected, most likely dev mistake, raise an error
+                if not base_view:
+                    raise AttributeError(
+                        f"View config dict found at {name}.{attr}, "
+                        "but no base classes declare a FastView with that name"
+                    )
+
+                # Reconfigure the view we found
+                dct[attr] = base_view.config(**config)
+
+        return super().__new__(cls, name, bases, dct)
+
+
+class ViewGroup(metaclass=ViewGroupType):
     """
     Collection of related views served from the same root url
     """
@@ -34,8 +72,8 @@ class ViewGroup:
     # Template root path
     template_root: Optional[str] = None
 
-    # Permissions definition, passed on to the views
-    permissions: Optional[Dict[str, Permission]]
+    # Permission to apply to all views (overridden by view-specific permissions)
+    permission: Optional[Permission]
 
     # All groups must define an index view
     index_view: Type[View]
@@ -69,26 +107,13 @@ class ViewGroup:
         View class. To avoid changing the view itself (in case it is used elsewhere), it
         will be subclassed before being modified.
 
-        This approach is used instead of ``view.as_view(**attrs)`` because a ViewGroup
-        needs to interrogate its views' class attributes before instantiation.
+        This approach is used instead of ``view.as_view(**attrs)`` because that would
+        create a new View instance, but a ViewGroup may need to interrogate a view's
+        class attributes before instantiation.
         """
         if getattr(self, "views", None) is not None:
             raise RuntimeError("Views can only be collected once")
         self.views = {}
-
-        # Perform initial checks of permissions to make sure they are all permissions
-        if self.permissions:
-            invalid_perms = list(
-                filter(
-                    lambda pair: not isinstance(pair[1], Permission),
-                    self.permissions.items(),
-                )
-            )
-            if invalid_perms:
-                raise ValueError(
-                    "Permissions must be a subclass of"
-                    f" Permission: {', '.join([p[0] for p in invalid_perms])}"
-                )
 
         # Extract views defined on the class
         for attr in dir(self):
@@ -96,45 +121,24 @@ class ViewGroup:
             if not attr.endswith(VIEW_SUFFIX):
                 continue
             name = attr[: -len(VIEW_SUFFIX)]
-
-            # Check and store the view
             view = getattr(self, attr)
+
+            # If it's a view, reconfigure and store
+            print(f"Reconfigure {name}?")
             if isclass(view) and issubclass(view, AbstractFastView):
-                # Add attributes as necessary
-                attrs = self._get_view_attrs(name, view)
-                if attrs:
-                    view = type(view.__name__, (view,), attrs)
-                    setattr(self, f"{name}{VIEW_SUFFIX}", view)
+                print("Yes")
+                config = self._get_view_attrs(name, view)
+                self.views[name] = view.config(**config)
+                setattr(self, attr, self.views[name])
 
-                # Store
-                self.views[name] = view
-            else:
-                # Not a view
-                continue
-
-        # Sanity check the permissions to avoid typos
-        if self.permissions:
-            invalid_names = set(self.permissions.keys()).difference(
-                set(self.views.keys())
-            )
-            if invalid_names:
-                raise ValueError(
-                    f"Permissions defined without views: {', '.join(invalid_names)}"
-                )
-
-    def _get_view_attrs(self, name: str, view: View, **attrs: Any) -> Dict[str, Any]:
+    def _get_view_attrs(self, name: str, view: View) -> Dict[str, Any]:
         """
         Get a dict of attrs to set on a view class before it is added to self.views
         """
-        attrs.update({"viewgroup": self, "action": name})
-
-        if self.permissions:
-            permission = self.permissions.get(name)
-        else:
-            permission = None
-        if getattr(view, "permission", None) != permission:
-            attrs["permission"] = permission
-        return attrs
+        return {
+            "viewgroup": self,
+            "action": name,
+        }
 
     def include(self, namespace):
         """
@@ -209,7 +213,8 @@ class ViewGroup:
         # TODO: Is this really worth the complexity? Candidate for simplification.
         def can_factory(to_view):
             def can():
-                return to_view.permission.check(view.request)
+                permission = to_view.get_permission()
+                return permission.check(view.request)
 
             return can
 
@@ -288,11 +293,11 @@ class ModelViewGroup(ViewGroup):
     update_view: Optional[Type[View]] = UpdateView
     delete_view: Optional[Type[View]] = DeleteView
 
-    def _get_view_attrs(self, name: str, view: View, **attrs: Any) -> Dict[str, Any]:
+    def _get_view_attrs(self, name: str, view: View) -> Dict[str, Any]:
         """
         Add model-specific attributes to the view
         """
-        attrs = super()._get_view_attrs(name, view, **attrs)
+        attrs = super()._get_view_attrs(name, view)
 
         # Only add the model if one hasn't been defined already - a group may contain
         # views which operate on different models
@@ -311,7 +316,7 @@ class ModelViewGroup(ViewGroup):
     def get_template_root(self):
         template_root = super().get_template_root()
         if template_root:
-            return
+            return template_root
         app_label, model_name = self.model._meta.label_lower.split(".", 1)
         return f"{app_label}/{model_name}"
 

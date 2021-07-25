@@ -50,7 +50,8 @@ class AnnotatedObject:
             """
 
             def can(self):
-                if to_view.permission.check(
+                permission = to_view.get_permission()
+                if permission.check(
                     request=self.view.request,
                     model=type(self.original),
                     instance=self.original,
