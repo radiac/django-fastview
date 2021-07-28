@@ -1,5 +1,5 @@
 const path = require('path');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 const setPublicPath = require('@rushstack/set-webpack-public-path-plugin');
@@ -44,9 +44,10 @@ const moduleRuleScss = {
     {
       loader: 'sass-loader',
       options: {
-        includePaths: ['./node_modules'],
+        sassOptions: {
+          includePaths: ['./node_modules'],
+        },
         sourceMap: true,
-        sourceMapContents: false
       },
     },
   ],
