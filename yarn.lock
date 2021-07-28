@@ -884,14 +884,6 @@
     "@babel/helper-validator-identifier" "^7.14.8"
     to-fast-properties "^2.0.0"
 
-"@microsoft/set-webpack-public-path-plugin@^2.1.103":
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/@microsoft/set-webpack-public-path-plugin/-/set-webpack-public-path-plugin-2.4.0.tgz#842cdbebfda1325d1b66a891e85f957985edd05a"
-  integrity sha512-8dDjQBYtNVtYwWy4Dy8nS+ptziJIKaedJXUpcTW66fow1zBAvWx2uZgL73efm8htI8A82eiDFElgku5ASU6HGA==
-  dependencies:
-    lodash "~4.17.15"
-    uglify-js "~3.0.28"
-
 "@nicolo-ribaudo/chokidar-2@2.1.8-no-fsevents.2":
   version "2.1.8-no-fsevents.2"
   resolved "https://registry.yarnpkg.com/@nicolo-ribaudo/chokidar-2/-/chokidar-2-2.1.8-no-fsevents.2.tgz#e324c0a247a5567192dd7180647709d7e2faf94b"
@@ -908,6 +900,13 @@
     path-is-absolute "^1.0.0"
     readdirp "^2.2.1"
     upath "^1.1.1"
+
+"@rushstack/set-webpack-public-path-plugin@^3.2.57":
+  version "3.2.57"
+  resolved "https://registry.yarnpkg.com/@rushstack/set-webpack-public-path-plugin/-/set-webpack-public-path-plugin-3.2.57.tgz#bbbfc5e73a26c3bf8935ef6ada85f0777a80d0f9"
+  integrity sha512-9RXC2RY5Iw9z/8MYTcWJmu5W4Yh5HNyDJ8i9ctcuSVf/+2Lnx1iCzgHUs4PN2xV/Us++dqChPmRpZk1D+ZeNNw==
+  dependencies:
+    lodash "~4.17.15"
 
 "@sindresorhus/is@^0.7.0":
   version "0.7.0"
@@ -2068,11 +2067,6 @@ commander@^4.0.1:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/commander/-/commander-4.1.1.tgz#9fd602bd936294e9e9ef46a3f4d6964044b18068"
   integrity sha512-NOKm8xhkzAjzFx8B2v5OAHT+u5pRQc2UCa2Vq9jYL/31o2wi9mxBA7LIFs3sV5VSC49z6pEhfbMULvShKj26WA==
-
-commander@~2.11.0:
-  version "2.11.0"
-  resolved "https://registry.yarnpkg.com/commander/-/commander-2.11.0.tgz#157152fd1e7a6c8d98a5b715cf376df928004563"
-  integrity sha512-b0553uYA5YAEGgyYIGYROzKQ7X5RAqedkfjiZxwi0kL1g3bOaBNNZfYkzt/CL0umgD5wc9Jec2FbB98CjkMRvQ==
 
 commondir@^1.0.1:
   version "1.0.1"
@@ -6974,7 +6968,7 @@ source-map@^0.4.2:
   dependencies:
     amdefine ">=0.0.4"
 
-source-map@^0.5.0, source-map@^0.5.6, source-map@~0.5.1:
+source-map@^0.5.0, source-map@^0.5.6:
   version "0.5.7"
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.5.7.tgz#8a039d2d1021d22d1ea14c80d8ea468ba2ef3fcc"
   integrity sha1-igOdLRAh0i0eoUyA2OpGi6LvP8w=
@@ -7523,14 +7517,6 @@ typedarray@^0.0.6:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
   integrity sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
-
-uglify-js@~3.0.28:
-  version "3.0.28"
-  resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-3.0.28.tgz#96b8495f0272944787b5843a1679aa326640d5f7"
-  integrity sha512-0h/qGay016GG2lVav3Kz174F3T2Vjlz2v6HCt+WDQpoXfco0hWwF5gHK9yh88mUYvIC+N7Z8NT8WpjSp1yoqGA==
-  dependencies:
-    commander "~2.11.0"
-    source-map "~0.5.1"
 
 unbox-primitive@^1.0.1:
   version "1.0.1"

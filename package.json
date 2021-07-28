@@ -27,7 +27,7 @@
     "@babel/core": "^7.2.0",
     "@babel/plugin-proposal-class-properties": "^7.8.0",
     "@babel/preset-env": "^7.2.0",
-    "@microsoft/set-webpack-public-path-plugin": "^2.1.103",
+    "@rushstack/set-webpack-public-path-plugin": "^3.2.57",
     "babel-loader": "^8.0.4",
     "clean-webpack-plugin": "^2.0.1",
     "css-loader": "^2.0.0",

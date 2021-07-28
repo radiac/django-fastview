@@ -2,7 +2,7 @@ const path = require('path');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
-const setPublicPath = require('@microsoft/set-webpack-public-path-plugin');
+const setPublicPath = require('@rushstack/set-webpack-public-path-plugin');
 const webpack = require('webpack');
 
 // Only embed assets under 10 KB
@@ -59,7 +59,7 @@ const moduleRuleScss = {
 
 const config = {
   entry: {
-    'site': ['./static_src/index.js', './static_src/index.scss'],
+    'index': ['./static_src/index.js', './static_src/index.scss'],
   },
   output: {
     path: path.resolve(__dirname, './fastview/static/fastview'),
