@@ -124,9 +124,7 @@ class ViewGroup(metaclass=ViewGroupType):
             view = getattr(self, attr)
 
             # If it's a view, reconfigure and store
-            print(f"Reconfigure {name}?")
             if isclass(view) and issubclass(view, AbstractFastView):
-                print("Yes")
                 config = self._get_view_attrs(name, view)
                 self.views[name] = view.config(**config)
                 setattr(self, attr, self.views[name])

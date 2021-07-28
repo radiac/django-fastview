@@ -79,6 +79,8 @@ class AbstractFastView(UserPassesTestMixin):
 
         # Try viewgroup's permission
         if cls.viewgroup and hasattr(cls.viewgroup, "permission"):
+            # Collect viewgroup permission, or Denied if the viewgroup has set
+            # permission=None to remove an inherited permission
             permission = cls.viewgroup.permission or permission
 
         return permission
