@@ -86,6 +86,9 @@ class AbstractFastView(UserPassesTestMixin):
         return permission
 
     def has_permission(self) -> bool:
+        """
+        Check if this view instance has permission, based on self.request
+        """
         permission = self.__class__.get_permission()
         return permission.check(self.request)
 
@@ -246,8 +249,11 @@ class ObjectFastViewMixin(ModelFastViewMixin):
     """
 
     def has_permission(self) -> bool:
-        if not self.permission:
-            return True
+        """
+        Check if this view instance has permission, based on self.request, the model and
+        the model instance
+        """
+        permission = self.__class__.get_permission()
 
         # TODO: The permission check is carried out before ``self.get()`` sets
         # ``self.object``, so we need to get it ourselves. This adds a call to
@@ -257,7 +263,7 @@ class ObjectFastViewMixin(ModelFastViewMixin):
         instance = None
         if self.has_id_slug:
             instance = self.get_object()
-        return self.permission.check(self.request, self.model, instance)
+        return permission.check(self.request, self.model, instance)
 
     def get_title_kwargs(self, **kwargs):
         kwargs = super().get_title_kwargs(**kwargs)
@@ -275,24 +281,21 @@ class BaseFieldMixin:
     """
 
     model: Model  # Help type hinting to identify the intended base classes
-    fields: List[Any]  # Liskov made me do it
+    fields: Optional[List[Any]] = None  # Liskov made me do it
+    exclude: Optional[List[Any]] = None
 
-    def __init__(self, *args, **kwargs):
+    def get_fields(self):
         """
-        Default self.fields to the fields defined on the model
+        Return either self.fields, or all editable fields on the model
+        (excluding anything in self.exclude)
         """
-        super().__init__(*args, **kwargs)
+        fields = self.fields
+        if fields is None:
+            # Fields not specified
+            exclude = self.exclude or []
 
-        exclude = getattr(self, "exclude", None)
-        if exclude is None:
-            self.exclude = exclude = []
-
-        if getattr(self, "fields", None):
-            if exclude:
-                raise ValueError("Cannot specify both fields and exclude")
-        else:
             # Follow Django admin rules - anything not an AutoField with editable=True
-            self.fields = [
+            fields = [
                 field.name
                 for field in self.model._meta.get_fields()
                 if not isinstance(field, AutoField)
@@ -300,10 +303,18 @@ class BaseFieldMixin:
                 and field.name not in exclude
             ]
 
+        elif self.exclude is not None:
+            raise ImproperlyConfigured(
+                "Specifying both 'fields' and 'exclude' is not permitted."
+            )
+
+        return fields
+
 
 class FormFieldMixin(BaseFieldMixin):
-    fields: List[str]
-    exclude: List[str]
+    def get_form_class(self):
+        self.fields = self.get_fields()
+        return super().get_form_class()
 
 
 class InlineMixin:
@@ -363,32 +374,58 @@ class DisplayFieldMixin(BaseFieldMixin):
     """
 
     fields: List[Union[str, DisplayValue]]
-    _slug_to_field: Dict[str, DisplayValue]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    # Caches
+    _displayvalues: List[DisplayValue] = None
+    _displayvalue_lookup: Dict[str, DisplayValue] = None
 
+    def resolve_displayvalue_slug(self, slug):
+        """
+        Resolve a DisplayValue slug to its DisplayValue object
+        """
+        # Ensure cache is populated
+        if self._displayvalue_lookup is None:
+            fields = self.get_fields()
+            self._displayvalue_lookup = {
+                field.get_slug(view=self): field for field in fields
+            }
+
+        if slug not in self._displayvalue_lookup:
+            raise ValueError(f"Invalid order field {slug}")
+
+        return self._displayvalue_lookup[slug]
+
+    def get_fields(self):
+        """
+        Return a list of DisplayValue fields
+        """
+        if self._displayvalues is not None:
+            return self._displayvalues
+
+        # Get the list of fields - may be a mix of field names and DisplayValues
+        fields = super().get_fields()
+
+        # Prepare
         display_values: List[DisplayValue] = []
         field_names = [field.name for field in self.model._meta.get_fields()]
 
         # Convert field names to DisplayValue instances, and build slug lookup table
-        self._slug_to_field = {}
-        for field in self.fields:
+        for field in fields:
             if not isinstance(field, DisplayValue):
                 if field not in field_names:
                     raise ValueError(f'Unknown field "{field}"')
                 field = AttributeValue(field)
             display_values.append(field)
 
-            self._slug_to_field[field.get_slug(view=self)] = field
-        self.fields = display_values
+        self._displayvalues = display_values
+        return display_values
 
     @property
     def labels(self):
         """
         Return labels for the fields
         """
-        return [field.get_label(self) for field in self.fields]
+        return [field.get_label(self) for field in self.get_fields()]
 
 
 class SuccessUrlMixin(SuccessMessageMixin):

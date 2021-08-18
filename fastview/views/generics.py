@@ -75,22 +75,25 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
 
     def get_ordering(self):
         """
-        Order by the CSV list in the query string parameter PARAM_ORDER
+        Build queryset ordering rule from the CSV list of DisplayValue slugs in
+        request.GET[PARAM_ORDER]
         """
         if PARAM_ORDER not in self.request.GET:
             return None
 
-        # Validate slugs, get Display objects, and build list of order fields
+        # Split CSV list into DV slugs
         slugs = self.request.GET[PARAM_ORDER].split(",")
         ordering = []
         for slug in slugs:
+            # Determine order for this slug
             order = ""
             if slug.startswith("-"):
                 order = "-"
                 slug = slug[1:]
-            if slug not in self._slug_to_field:
-                raise ValueError(f"Invalid order field {slug}")
-            field_name = self._slug_to_field[slug].get_order_by()
+
+            # Find DisplayValue for this slug, and build ordering rule
+            displayvalue = self.resolve_displayvalue_slug(slug)
+            field_name = displayvalue.get_order_by()
             ordering.append(f"{order}{field_name}")
 
         return ordering
