@@ -51,6 +51,7 @@ class Inline(FormFieldMixin):
         return cls
 
     def get_formset(self) -> BaseInlineFormSet:
+        self.fields = self.get_fields()
         return inlineformset_factory(
             parent_model=self.parent_model,
             model=self.model,
