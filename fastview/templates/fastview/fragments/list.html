@@ -1,6 +1,13 @@
-{% for label, url in action_links %}
-  <p><a href="{{ url }}">{{ label }}</a></p>
-{% endfor %}
+
+{% block actions_container %}
+<ul class="fv-actions">
+  {% block actions %}
+    {% for label, url in action_links %}
+      <li><a href="{{ url }}">{{ label }}</a></li>
+    {% endfor %}
+  {% endblock %}
+</ul>
+{% endblock %}
 
 <table>
   <thead>
