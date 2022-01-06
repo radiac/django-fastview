@@ -1,0 +1,7 @@
+<div class="fastview-list-filter">
+  <h2>Filter</h2>
+  {% for filter in filters %}
+    <h3>{{ filter.label }}</h3>
+    {{ filter.render }}
+  {% endfor %}
+</div>

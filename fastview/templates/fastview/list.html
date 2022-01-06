@@ -2,6 +2,11 @@
 
 {% block fastview_content %}
 
-{% include "fastview/fragments/list.html" %}
+<div class="fastview-list">
+  {% if filters %}
+    {% include "fastview/fragments/list_filter.html" %}
+  {% endif %}
+  {% include "fastview/fragments/list.html" %}
+</div>
 
 {% endblock %}

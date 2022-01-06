@@ -40,6 +40,7 @@ Fastview defines 5 generic views:
   * ``fields`` supports strings and ``DisplayValue`` instances - see `display fields`_
   * the template has ``annotated_objects``, a list of ``AnnotatedObject`` instances -
     see `annotated objects`_
+  * it can have ``filters`` - see `filters`_
 
 * ``fastview.views.DetailView``
 
@@ -221,3 +222,49 @@ The ``Inline`` class looks for attributes which map to Django's
 
 There is a :doc:`JavaScript <javascript>` library to dynamically add and remove forms
 from the formset.
+
+
+Filters
+=======
+
+The ``ListView`` supports ``filters = [...]`` attribute. This can be a list of model
+field names or ``Filter`` instances.
+
+Fastview has 3 built-in filters:
+
+* ``Filter``: a choice-based filter. Choices can either be specified on the constructor,
+  on a subclass, or collected from the model field the filter is acting on. Subclasses
+  can also define their own ``get_choices()`` method to override the default behaviour.
+
+* ``DateHierarchyFilter``: lists active years for the DateField or DateTimeField, and
+  then when a year is selected, filters by that year and lists active months to drill
+  down to.
+
+* ``BooleanFilter``: Yes/No filter for a BooleanField
+
+If you specify the name of the field in the ``filters`` list, the most appropriate
+filter will be chosen for you.
+
+Boolean fields
+
+For example::
+
+    from fastview import ListView
+    from fastview.filters import Filter
+
+    class EmptyFilter(Filter):
+        choices = (
+            ('empty': 'Empty'),
+            ('set': 'Set'),
+        )
+
+        def process(self, qs):
+            if self.value == 'empty':
+                return qs.filter(**{self.field_name: ''})
+            elif self.value == 'set':
+                return qs.exclude(**{self.field_name: ''})
+            return qs
+
+    class Entries(ListView):
+        model = Entry
+        filters = ['publish_date', 'is_published', EmptyFilter('title')]

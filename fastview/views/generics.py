@@ -4,13 +4,16 @@ Generic views for FastView
 
 from __future__ import annotations
 
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Union
 
+from django.contrib import messages
+from django.core.exceptions import FieldDoesNotExist
+from django.db.models import QuerySet
 from django.views import generic
 
 from ..constants import PARAM_LIMIT, PARAM_ORDER
 from .display import ObjectValue
-from .filters import Filter
+from .filters import Filter, FilterError, field_to_filter_class
 from .mixins import (
     DisplayFieldMixin,
     FormFieldMixin,
@@ -36,21 +39,75 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
     action = "list"
     action_label = "List"
     row_permission = None
-    filters: Optional[Dict[str, Filter]] = None
+    filters: Optional[List[Union[str, Filter]]] = None
 
-    def get_queryset(self):
+    def get_filters(self) -> Dict[str, Filter]:
+        """
+        Build filter list by looking up field strings and converting to Filter instances
+
+        Convert self.filters from:
+
+            ['field_name', Filter('param', ...)]
+
+        to:
+
+            {
+                'field_name': Filter('field_name', ...),
+                'param': Filter('param', ...),
+            }
+        """
+        filters = {}
+        if not self.filters:
+            return filters
+
+        for filter_obj in self.filters:
+            if not isinstance(filter_obj, Filter):
+                # Convert field name into a filter object
+                field_name = filter_obj
+                try:
+                    field = self.model._meta.get_field(field_name)
+                except FieldDoesNotExist as e:
+                    # Extend error message so it's a bit more helpful
+                    e.args = (f"Filter invalid: {e.args[0]}",) + e.args[1:]
+                    raise e
+                filter_cls = field_to_filter_class(field)
+                filter_obj = filter_cls(field_name)
+
+            # Give the filter a reference to this view
+            filter_obj.view = self
+            filters[filter_obj.param] = filter_obj
+
+        return filters
+
+    def get_queryset(self) -> QuerySet:
         qs = super().get_queryset()
 
         # Only show permitted objects
         if self.row_permission:
             qs = self.row_permission.filter(request=self.request, queryset=qs)
 
+        # Collect list of filter definitions
+        self.request_filters = self.get_filters()
         if self.request.GET:
             # Filter
-            if self.filters is not None:
-                for param_name, filter_obj in self.filters.items():
-                    if param_name in self.request.GET:
-                        qs = filter_obj.process(qs, self.request.GET[param_name])
+            if self.request_filters:
+                filters = self.request_filters
+                self.request_filters = {}
+                for param, filter_obj in filters.items():
+                    if param in self.request.GET:
+                        # Bind filters to values for use in templates
+                        try:
+                            bound_filter = filter_obj.bind(self.request.GET[param])
+                            self.request_filters[param] = bound_filter
+
+                            # Call the filters' process() to filter the data
+                            qs = bound_filter.process(qs)
+
+                        except FilterError as e:
+                            messages.error(self.request, str(e))
+
+                    else:
+                        self.request_filters[param] = filter_obj
 
             # Order
             ordering = self.get_ordering()
@@ -105,6 +162,8 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
         context["annotated_object_list"] = self.annotated_object_list_generator_factory(
             context["object_list"]
         )
+
+        context["filters"] = self.request_filters.values()
 
         return context
 

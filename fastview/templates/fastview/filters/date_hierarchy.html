@@ -1,0 +1,26 @@
+{% if year %}
+
+  <ul>
+  {% for value, label, url, selected in choices %}
+    {% if selected %}
+      <li>{{ label }}</li>
+    {% else %}
+      <li><a href="{{ url }}"">{{ label }}</a></li>
+    {% endif %}
+
+    {% if year and forloop.first %}
+      <li>{{ year }}</li>
+      <ul>
+    {% endif %}
+
+    {% if year and forloop.last %}
+      </ul>
+    {% endif %}
+  {% endfor %}
+  </ul>
+
+{% else %}
+
+  {% include "fastview/filters/choices.html" %}
+
+{% endif %}

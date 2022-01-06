@@ -1,6 +1,7 @@
+<div class="fastview-list-data">
 
 {% block actions_container %}
-<ul class="fv-actions">
+<ul class="fastview-actions">
   {% block actions %}
     {% for label, url in action_links %}
       <li><a href="{{ url }}">{{ label }}</a></li>
@@ -37,3 +38,5 @@
     {% endfor %}
   </tbody>
 </table>
+
+</div>

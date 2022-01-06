@@ -1,0 +1,9 @@
+<ul>
+{% for value, label, url, selected in choices %}
+  {% if selected %}
+    <li>{{ label }}</li>
+  {% else %}
+    <li><a href="{{ url }}"">{{ label }}</a></li>
+  {% endif %}
+{% endfor %}
+</ul>

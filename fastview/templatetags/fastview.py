@@ -1,4 +1,7 @@
+from copy import copy
+
 from django import template
+from django.http import QueryDict
 from django.template import TemplateSyntaxError
 from django.template.base import token_kwargs
 from django.template.response import SimpleTemplateResponse
@@ -93,24 +96,36 @@ class FragmentNode(template.Node):
         view_name = self.view_name.resolve(context)
         args = [arg.resolve(context) for arg in self.args]
         kwargs = {k: v.resolve(context) for k, v in self.kwargs.items()}
-        params = {k: v.resolve(context) for k, v in self.params.items()}
+        params = {k: str(v.resolve(context)) for k, v in self.params.items()}
 
         url = reverse(view_name, args=args, kwargs=kwargs)
         resolver_match = resolve(url)
         view, view_args, view_kwargs = resolver_match
 
-        # Build new request object
-        orig_request = context["request"]
-        factory = RequestFactory()
-        action = getattr(factory, orig_request.method.lower())
-
-        request = action(url, data=params)
-        request.user = orig_request.user
+        # Update request object with new path
+        request = copy(context["request"])
+        path_info_root = request.path[: len(request.path) - len(request.path_info)]
+        request.path = url
+        request.path_info = url[len(path_info_root) :]
         request.resolver_match = resolver_match
 
+        if request.method == "GET":
+            GET = QueryDict(mutable=True)
+            GET.update(params)
+            request.GET = GET
+        else:
+            # TODO: Add support for POST
+            raise NotImplementedError("Fragments only support GET")
+
+        # Perform the new request
         response = view(*view_args, as_fragment=True, request=request, **view_kwargs)
 
         if isinstance(response, SimpleTemplateResponse):
             response = response.render()
+        else:
+            # TODO: Add support for redirects eg from POST
+            raise ValueError("Did not receive expected response from fragment view")
 
-        return mark_safe(response.content.decode())
+        response_content = mark_safe(response.content.decode())
+
+        return response_content
