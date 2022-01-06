@@ -305,7 +305,6 @@ class DateHierarchyFilter(Filter):
         elif isinstance(self.model_field, models.DateField):
             date_method = "dates"
         else:
-            breakpoint()
             raise FilterError(
                 "Date filter can only be applied to a DateField or DateTimeField"
             )
