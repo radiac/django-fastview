@@ -17,6 +17,7 @@ Feature:
 
 * Support for list view filtering and ordering
 * Ability to embed fastviews as fragments in other pages
+* Support for list view pagination with standard ``paginate_by`` attribute
 
 Changes:
 

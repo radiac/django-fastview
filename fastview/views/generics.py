@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional, Union
 
+import django
 from django.contrib import messages
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import QuerySet
@@ -40,6 +41,7 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
     action_label = "List"
     row_permission = None
     filters: Optional[List[Union[str, Filter]]] = None
+    # paginate_by = 5
 
     def get_filters(self) -> Dict[str, Filter]:
         """
@@ -159,15 +161,22 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
         context = super().get_context_data(**kwargs)
 
         # Generator to return object list with permissions and iterable fields
-        context["annotated_object_list"] = self.annotated_object_list_generator_factory(
-            context["object_list"]
-        )
+        if self.paginate_by:
+            page_obj = context["page_obj"]
+            if django.VERSION >= (3, 2, 0):
+                context["page_range"] = page_obj.paginator.get_elided_page_range(
+                    page_obj.number
+                )
+            objects = page_obj
+        else:
+            objects = context["object_list"]
+        context["annotated_object_list"] = self.object_annotator_factory(objects)
 
         context["filters"] = self.request_filters.values()
 
         return context
 
-    def annotated_object_list_generator_factory(self, object_list):
+    def object_annotator_factory(self, object_list):
         """
         Generate an annotated object list without holding everything in memory
 

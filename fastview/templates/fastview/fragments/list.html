@@ -24,7 +24,7 @@
     <tr>
       {% for value in object.values %}
         {% if forloop.first %}
-            <td>{% if object.can_detail %}<a href="{{ object.get_detail_url }}">{{ value }}</a>{% else %}{{ value }}{% endif %}</td>
+          <td>{% if object.can_detail %}<a href="{{ object.get_detail_url }}">{{ value }}</a>{% else %}{{ value }}{% endif %}</td>
         {% else %}
           <td>{{ value }}</td>
         {% endif %}
@@ -38,5 +38,11 @@
     {% endfor %}
   </tbody>
 </table>
+
+{% block pagination %}
+  {% if page_obj %}
+    {% include "fastview/includes/list/pagination.html" %}
+  {% endif %}
+{% endblock %}
 
 </div>

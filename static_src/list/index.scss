@@ -14,3 +14,18 @@
   flex: 1 1 auto;
   order: 1;
 }
+
+
+.fastview-pagination {
+  ul {
+    margin: 1rem 0;
+    padding: 0;
+    list-style:none;
+  }
+  li {
+    display: inline;
+  }
+  span, a {
+    margin: 0 0.5rem;
+  }
+}
