@@ -28,30 +28,60 @@ from .mixins import (
 class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
     """
     A permission-aware ListView with support for ViewGroups
-
-    The template context has additional variables available:
-
-        annotated_object_list: List of (object, Can, fields) tuples
     """
 
+    #: The default template name
     default_template_name = "fastview/list.html"
+
+    #: The page title, passed to template context for use in page title and headers.
+    #: See :meth:`get_title` for more details
     title = "{verbose_name_plural}"
+
+    #: List of fields to show in the list table.
+    #:
+    #: The values can be :mod:`display classes <fastview.views.display>` or string
+    #  values which correspond to model field names or methods on the model.
+    #:
+    #: Example::
+    #:
+    #:      fields = [
+    #:          'field_name',  # MyModel.field_name
+    #:          'get_value',  # MyModel.get_value()
+    #:          CustomValue(),  # :class:`fastview.views.display.DisplayValue` subclass
+    #:
+    #: Defaults to show the string value of the model instance
     fields = [ObjectValue()]
+
+    #: Name of action for the ViewGroup
     action = "list"
+
+    #: Label for this action
     action_label = "List"
+
+    #: :mod:`Permission <fastview.permissions>` check to display individual rows.
     row_permission = None
+
+    #: List of available filters to apply to the list table.
+    #:
+    #: The values can be :mod:`filter classes <fastview.views.filters>` or string values
+    #: which correspond to model field names.
+    #:
+    #: Example::
+    #:
+    #:      filters = [
+    #:          'field_name',  # MyModel.field_name
+    #:          CustomFilter(...), # :class:`fastview.views.filters.Filter` subclass
     filters: Optional[List[Union[str, Filter]]] = None
-    # paginate_by = 5
 
     def get_filters(self) -> Dict[str, Filter]:
         """
         Build filter list by looking up field strings and converting to Filter instances
 
-        Convert self.filters from:
+        Convert self.filters from::
 
             ['field_name', Filter('param', ...)]
 
-        to:
+        to::
 
             {
                 'field_name': Filter('field_name', ...),
@@ -82,60 +112,59 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
         return filters
 
     def get_queryset(self) -> QuerySet:
+        """
+        Apply filters, search terms, ordering and limits to the queryset
+        """
         qs = super().get_queryset()
 
         # Only show permitted objects
         if self.row_permission:
             qs = self.row_permission.filter(request=self.request, queryset=qs)
 
-        # Collect list of filter definitions
+        # Collect list of filter definitions and put them on `.request_filters` so we
+        # can use them when rendering the template
         self.request_filters = self.get_filters()
-        if self.request.GET:
-            # Filter
-            if self.request_filters:
-                filters = self.request_filters
-                self.request_filters = {}
-                for param, filter_obj in filters.items():
-                    if param in self.request.GET:
-                        # Bind filters to values for use in templates
-                        try:
-                            bound_filter = filter_obj.bind(self.request.GET[param])
-                            self.request_filters[param] = bound_filter
 
-                            # Call the filters' process() to filter the data
-                            qs = bound_filter.process(qs)
+        # If we have filters defined, check GET and default filter
+        if self.request_filters:
+            for param, filter_obj in self.request_filters.items():
+                if param in self.request.GET:
+                    # Bind filters to values for use in templates
+                    try:
+                        bound_filter = filter_obj.bind(self.request.GET[param])
+                        self.request_filters[param] = bound_filter
 
-                        except FilterError as e:
-                            messages.error(self.request, str(e))
+                        # Call the filters' process() to filter the data
+                        qs = bound_filter.process(qs)
 
-                    else:
-                        self.request_filters[param] = filter_obj
+                    except FilterError as e:
+                        messages.error(self.request, str(e))
 
-            # Order
-            ordering = self.get_ordering()
-            if ordering:
-                qs = qs.order_by(*ordering)
+        # Order
+        ordering = self.get_ordering()
+        if ordering:
+            qs = qs.order_by(*ordering)
 
-            # Limit the queryset
-            limit = self.request.GET.get(PARAM_LIMIT, 0)
+        # Limit the queryset
+        limit = self.request.GET.get(PARAM_LIMIT, 0)
+        if limit:
+            try:
+                limit = int(limit)
+            except ValueError:
+                limit = 0
+
+            # Ensure positive limit (or 0)
+            limit = max(0, limit)
+
             if limit:
-                try:
-                    limit = int(limit)
-                except ValueError:
-                    limit = 0
-
-                # Ensure positive limit (or 0)
-                limit = max(0, limit)
-
-                if limit:
-                    qs = qs[:limit]
+                qs = qs[:limit]
 
         return qs
 
     def get_ordering(self):
         """
         Build queryset ordering rule from the CSV list of DisplayValue slugs in
-        request.GET[PARAM_ORDER]
+        ``request.GET[PARAM_ORDER]``
         """
         if PARAM_ORDER not in self.request.GET:
             return None
@@ -152,12 +181,18 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
 
             # Find DisplayValue for this slug, and build ordering rule
             displayvalue = self.resolve_displayvalue_slug(slug)
-            field_name = displayvalue.get_order_by()
+            field_name = displayvalue.get_order_by(self)
             ordering.append(f"{order}{field_name}")
 
         return ordering
 
     def get_context_data(self, **kwargs):
+        """
+        The template context has additional variables available::
+
+            annotated_object_list: List of (object, Can, fields) tuples
+            filters: List of filters, bound to any query arguments
+        """
         context = super().get_context_data(**kwargs)
 
         # Generator to return object list with permissions and iterable fields

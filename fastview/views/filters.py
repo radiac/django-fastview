@@ -43,10 +43,12 @@ class Filter:
     ):
         self.param = param
         self.field_name = field_name or param
+
         if label:
             self.label = label
         else:
             self.label = param.replace("_", " ").title()
+
         if choices is not None:
             self.choices = choices
 

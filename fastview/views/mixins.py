@@ -77,8 +77,8 @@ class AbstractFastView(UserPassesTestMixin):
         if cls.permission:
             permission = cls.permission
 
-        # Try viewgroup's permission
-        if cls.viewgroup and hasattr(cls.viewgroup, "permission"):
+        # Fall back to viewgroup's permission
+        elif cls.viewgroup and hasattr(cls.viewgroup, "permission"):
             # Collect viewgroup permission, or Denied if the viewgroup has set
             # permission=None to remove an inherited permission
             permission = cls.viewgroup.permission or permission
@@ -172,11 +172,20 @@ class FastViewMixin(AbstractFastView):
         """
         Get the title for the page
 
-        Used by the default templates
+        Used by the default templates.
+
+        The dict returned by :meth:`get_title_kwargs` is applied to :attr:`title` using
+        format.
         """
         return self.title.format(**self.get_title_kwargs())
 
     def get_title_kwargs(self, **kwargs):
+        """
+        Return a dict for generating a page title in :meth:`get_title`:
+
+        ``action``
+            The name of this view's action, eg list, update, delete
+        """
         kwargs["action"] = self.action.replace("_", " ").title()
         return kwargs
 
@@ -412,9 +421,16 @@ class DisplayFieldMixin(BaseFieldMixin):
         # Convert field names to DisplayValue instances, and build slug lookup table
         for field in fields:
             if not isinstance(field, DisplayValue):
-                if field not in field_names:
+                # Passed something that's not a DisplayValue - decide what to do
+
+                if (
+                    field in field_names  # It's a straight field value
+                    or hasattr(self.model, field)  # model attribute, probably a method
+                    # TODO: Support attributes added by the queryset, eg aggregations
+                ):
+                    field = AttributeValue(field)
+                else:
                     raise ValueError(f'Unknown field "{field}"')
-                field = AttributeValue(field)
             display_values.append(field)
 
         self._displayvalues = display_values

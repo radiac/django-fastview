@@ -1,4 +1,5 @@
 <div class="fastview-pagination">
+{% spaceless %}
 
 <ul>
 {% if page_range %}
@@ -11,7 +12,7 @@
 
   {% for i in page_range %}
     {% if page_obj.number == i %}
-      <li class="current"><span>{{ i }}</span></li>
+      <li><span class="current">{{ i }}</span></li>
     {% else %}
       {% if i == page_obj.paginator.ELLIPSIS %}
         <li><span>{{ i }}</span></li>
@@ -35,7 +36,7 @@
     <li><a href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
   {% endif %}
 
-  <li class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.</li>
+  <li><span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
 
   {% if page_obj.has_next %}
     <li><a href="?page={{ page_obj.next_page_number }}">Next</a></li>
@@ -43,6 +44,7 @@
   {% endif %}
 
 {% endif %}
-
 </ul>
+
+{% endspaceless %}
 </div>
