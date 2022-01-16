@@ -2,6 +2,20 @@
 
 {% block fastview_content %}
 
+{% block actions_container %}
+<ul class="fastview-actions">
+  {% block actions %}
+    {% for label, url in annotated_object.action_links %}
+      <li><a href="{{ url }}">{{ label }}</a></li>
+    {% endfor %}
+
+    {% for label, url in action_links %}
+      <li><a href="{{ url }}">{{ label }}</a></li>
+    {% endfor %}
+  {% endblock %}
+</ul>
+{% endblock %}
+
 <dl>
   {% for label, value in annotated_object.items %}
   <dt>{{ label }}</dt>
