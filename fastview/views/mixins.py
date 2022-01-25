@@ -20,7 +20,7 @@ from .objects import AnnotatedObject
 
 
 if TYPE_CHECKING:
-    from ..groups import ViewGroup
+    from ..viewgroups import ViewGroup
     from .inlines import Inline
 
 

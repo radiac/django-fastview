@@ -22,6 +22,9 @@ Feature:
 Changes:
 
 * Permissions and other view overrides are now managed through View.config()
+* Renamed ``fastview.groups`` to ``fastview.viewgroups``
+* Renamed ``fastview.views.generics`` to ``fastview.views.generic``
+* Removed imports from ``fastview.views``
 
 
 0.0.3, 2020-02-10

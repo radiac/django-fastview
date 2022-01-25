@@ -221,9 +221,9 @@ class Filter:
             if not value:
                 # Delete from params. Use pop intead of del as we'll also cover the case
                 # where no param has been passed
-                params.pop(self.field_name, None)
+                params.pop(self.param, None)
             else:
-                params[self.field_name] = value
+                params[self.param] = value
 
             selected = value == self.value
 

@@ -51,6 +51,16 @@ They can still be set directly as ``permission`` on class definitions.
 See :ref:`permissions` for more details.
 
 
+Imports
+-------
+
+The internal structure of Fastview's modules has changed:
+
+* Renamed ``fastview.groups`` to ``fastview.viewgroups``
+
+* Renamed ``fastview.views.generics`` to ``fastview.views.generic``
+
+
 .. _upgrade_0-0-1:
 
 Upgrading from 0.0.1

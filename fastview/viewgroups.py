@@ -11,14 +11,8 @@ from django.views.generic.list import MultipleObjectMixin
 
 from .constants import INDEX_VIEW, OBJECT_VIEW, VIEW_SUFFIX
 from .permissions import Permission
-from .views import (
-    AbstractFastView,
-    CreateView,
-    DeleteView,
-    DetailView,
-    ListView,
-    UpdateView,
-)
+from .views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+from .views.mixins import AbstractFastView
 
 
 if TYPE_CHECKING:

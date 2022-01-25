@@ -2,7 +2,7 @@
 Test viewgroup
 """
 from fastview import permissions
-from fastview.groups import ModelViewGroup
+from fastview.viewgroups import ModelViewGroup
 
 from .app.models import Entry
 

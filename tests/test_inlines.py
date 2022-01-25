@@ -3,7 +3,7 @@ Test viewgroup
 """
 from fastview import permissions
 from fastview.forms import InlineParentModelForm
-from fastview.views.generics import UpdateView
+from fastview.views.generic import UpdateView
 from fastview.views.inlines import Inline
 
 from .app.models import Comment, Entry
