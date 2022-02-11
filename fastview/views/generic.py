@@ -73,6 +73,9 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
     #:          CustomFilter(...), # :class:`fastview.views.filters.Filter` subclass
     filters: Optional[List[Union[str, Filter]]] = None
 
+    #: Context variable name for the annotated object list.
+    context_annotated_name = "annotated_object_list"
+
     def get_filters(self) -> Dict[str, Filter]:
         """
         Build filter list by looking up field strings and converting to Filter instances
@@ -205,7 +208,7 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
             objects = page_obj
         else:
             objects = context["object_list"]
-        context["annotated_object_list"] = self.object_annotator_factory(objects)
+        context[self.context_annotated_name] = self.object_annotator_factory(objects)
 
         context["filters"] = self.request_filters.values()
 

@@ -1,0 +1,7 @@
+body {
+    background: white url("images/background.gif") no-repeat;
+}
+
+li a {
+    color: green;
+}

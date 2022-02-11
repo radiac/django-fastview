@@ -2,19 +2,30 @@
 Django Fastview
 ===============
 
-.. seealso::
-
-    Read this online at http://radiac.net/projects/django-fastview/
-
-
 Contents
 ========
 
 .. toctree::
     :maxdepth: 2
+    :titlesonly:
 
     get_started
+    Tutorial <tutorial/index>
+    viewgroups
+    generic_views/index
+    custom_views
     permissions
-    javascript
+    templates
+    frontend
     upgrading
     contributing
+    changelog
+    api
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

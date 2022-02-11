@@ -123,7 +123,7 @@ Django ``Q`` objects):
 * ``Staff() & ~Owner("owner")`` - staff who are not the owner
 
 
-Complex permissions wihch need to be used in several places can be assigned to
+Complex permissions which need to be used in several places can be assigned to
 variables::
 
     staff_not_owner = Staff() & ~Owner("owner")

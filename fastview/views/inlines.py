@@ -5,7 +5,7 @@ Mimic Django admin inlines
 """
 from typing import Any, Callable, Dict, List, Optional, Type
 
-from django.db.models import Model
+from django.db.models.base import ModelBase
 from django.forms import BaseInlineFormSet, ModelForm
 from django.forms.models import inlineformset_factory
 
@@ -20,8 +20,8 @@ class InlineFormSet(BaseInlineFormSet):
 
 
 class Inline(FormFieldMixin):
-    model: Model
-    parent_model: Model
+    model: Type[ModelBase]
+    parent_model: Type[ModelBase]
     form: Type[ModelForm] = InlineChildModelForm
     formset: Type[BaseInlineFormSet] = InlineFormSet
     fk_name: Optional[str] = None
@@ -40,7 +40,7 @@ class Inline(FormFieldMixin):
     can_order: bool = False
     can_delete: bool = True
 
-    def __init__(self, parent_model: Model):
+    def __init__(self, parent_model: Type[ModelBase]):
         self.parent_model = parent_model
         super().__init__()
 

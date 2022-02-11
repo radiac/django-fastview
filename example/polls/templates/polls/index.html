@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% if latest_question_list %}
+  {# We'll iterate over the annotated object list #}
+  {% for annotated_question in latest_question_list %}
+    <div class="question">
+
+      {# Access the Question instance as annotated_question.object #}
+      {% with question=annotated_question.object %}
+        <h2>{{ question.question_text }}</h2>
+        <p>{{ question.pub_date|date:"D d M Y" }}</p>
+      {% endwith %}
+
+      {# Use the permission annotations to check access #}
+      {% if annotation.can_vote %}
+        <a href="{{ annotation.get_vote_url }}">Vote</A>
+      {% else %}
+        <a href="{{ annotation.get_detail_url }}">See the question</a>
+      {% endif %}
+    </div>
+  {% endfor %}
+  </ul>
+{% else %}
+    <p>No polls are available.</p>
+{% endif %}
+
+{% endblock %}

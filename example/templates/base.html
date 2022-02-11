@@ -1,0 +1,19 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Fastview example</title>
+	<link rel="stylesheet" href="{% static "site.css" %}">
+	<script src="{% static "site.js" %}" async></script>
+
+	<link rel="stylesheet" href="{% static "fastview/index.css" %}">
+	<script src="{% static "fastview/index.js" %}" async></script>
+  {% block extrahead %}{% endblock %}
+</head>
+<body>
+
+{% block content %}
+{% endblock %}
+
+</body>
+</html>

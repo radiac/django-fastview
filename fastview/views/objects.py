@@ -17,12 +17,15 @@ class AnnotatedObject:
     # Current view - must be overridden in subclass - see for_view()
     view: ModelFastViewMixin
 
+    #: Current instance of the model that this annotated object wraps
+    object: Model
+
     def __init__(self, instance: Model):
         """
         Arguments:
             instance: Object which this is annotating
         """
-        self.original = instance
+        self.object = instance
 
     @classmethod
     def for_view(
@@ -53,8 +56,8 @@ class AnnotatedObject:
                 permission = to_view.get_permission()
                 if permission.check(
                     request=self.view.request,
-                    model=type(self.original),
-                    instance=self.original,
+                    model=type(self.object),
+                    instance=self.object,
                 ):
                     return True
                 return False
@@ -69,7 +72,7 @@ class AnnotatedObject:
             def get_url(self):
                 namespace = self.view.request.resolver_match.namespace
                 full_name = f"{namespace}:{to_name}"
-                return reverse(full_name, args=[self.original.pk])
+                return reverse(full_name, args=[self.object.pk])
 
             return get_url
 
@@ -83,7 +86,7 @@ class AnnotatedObject:
             """
             Return the field values
             """
-            return [field.get_value(self.original) for field in self.view.get_fields()]
+            return [field.get_value(self.object) for field in self.view.get_fields()]
 
         def items(self):
             """

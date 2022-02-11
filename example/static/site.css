@@ -1,0 +1,105 @@
+/**
+  General styles
+*/
+body {
+  background: #fff;
+  font-family: sans-serif;
+}
+
+a {
+  color: #294970;
+}
+a:hover {
+  color: #5080c0;
+}
+
+/**
+  Fastview action list
+*/
+ul.fastview-actions {
+  margin: 0 0 1rem 0;
+  padding: 0;
+}
+
+ul.fastview-actions li {
+  display: inline-block;
+}
+
+ul.fastview-actions a {
+  background: #5080c0;
+  border-radius: 1rem;
+  color: white;
+  display: block;
+  padding: 0.25rem 1rem;
+  text-decoration: none;
+}
+
+ul.fastview-actions a:hover {
+  background: #294970;
+}
+
+/**
+  Fastview list table
+*/
+table.fastview-list-table {
+  width: 100%;
+  border-spacing: 0;
+}
+
+table.fastview-list-table th,
+table.fastview-list-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.25rem 0.5rem;
+}
+
+table.fastview-list-table th {
+  background: #5080c0;
+  color: #fff;
+}
+
+table.fastview-list-table tr:nth-child(even) {
+  background: #edf4fd;
+}
+
+/**
+  Fastview list filter
+*/
+div.fastview-list-filter {
+  border: 1px solid #5080c0;
+  margin: 0 1rem;
+  padding: 0;
+}
+
+div.fastview-list-filter h2 {
+  background: #5080c0;
+  color: #fff;
+  font-size: 1rem;
+  margin: 0;
+  padding: 0.75rem 1rem;
+}
+
+div.fastview-list-filter h3 {
+  margin: 1rem;
+}
+div.fastview-list-filter ul {
+  list-style: none;
+  margin: 0 1rem;
+  padding: 0;
+}
+
+
+/**
+  Fastview pagination
+*/
+
+div.fastview-pagination ul {
+  list-style: none;
+  margin: 1rem;
+  padding: 0;
+}
+
+div.fastview-pagination li {
+  display: inline-block;
+  margin: 0 0.5rem;
+}

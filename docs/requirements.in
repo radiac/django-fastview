@@ -1,0 +1,4 @@
+sphinx
+# sphinx-autobuild
+sphinx-gitref
+-e git+https://github.com/radiac/sphinx_radiac_theme.git#egg=sphinx_radiac_theme

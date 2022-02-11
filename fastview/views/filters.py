@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Tuple
 
 from django.db import models
 from django.template.loader import get_template
-from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
@@ -30,6 +29,7 @@ class Filter:
     label: str = None
     choices: Optional[Iterable[Tuple[Any, str]]] = None
     _choices: Optional[Iterable[Tuple[Any, str]]] = None
+    value: str = ""
     value: str = ""
     template_name: str = "fastview/filters/choices.html"
     ignore_invalid = False
@@ -278,6 +278,11 @@ def str_to_date_tuple(value: str) -> Tuple[Optional[int], Optional[int]]:
 class DateHierarchyFilter(Filter):
     """
     Filter by date hierarchy - list years, then list months within a selected year
+
+    ``filter.value`` is the raw value from the querystring, ``""``, ``yyyy`` or
+    ``yyyy-mm``
+
+    ``filter.year`` and ``filter.month`` are ``None`` or the integer values
     """
 
     year: int = None
@@ -364,8 +369,13 @@ class DateHierarchyFilter(Filter):
 class BooleanFilter(Filter):
     """
     Filter a boolean yes/no field
+
+    ``filter.value`` is the raw value from the querystring, ``""``, ``1`` or ``0``
+
+    ``filter.boolean`` is the boolean value, ``None``, ``True`` or ``False``
     """
 
+    boolean: Optional[bool]
     choices = (("", _("All")), ("1", _("Yes")), ("0", _("No")))
 
     def set_value(self, value: str):

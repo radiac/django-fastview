@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Type, Uni
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models import AutoField, Model
+from django.db.models import AutoField
 from django.urls import reverse
 from django.utils.translation import gettext as _
 
@@ -20,6 +20,8 @@ from .objects import AnnotatedObject
 
 
 if TYPE_CHECKING:
+    from django.db.models.base import ModelBase
+
     from ..viewgroups import ViewGroup
     from .inlines import Inline
 
@@ -35,7 +37,7 @@ class AbstractFastView(UserPassesTestMixin):
     has_id_slug: bool = False
 
     @classmethod
-    def config(cls, **attrs: Dict[str, Any]) -> AbstractFastView:
+    def config(cls, **attrs: Any) -> AbstractFastView:
         """
         Creates a new subclass of this View, with the attributes provided
         """
@@ -209,7 +211,7 @@ class ModelFastViewMixin(FastViewMixin):
     Mixin for class-based views which act on models
     """
 
-    model: Type[Model]
+    model: Type[ModelBase]
     annotated_model_object = None
     action_links = None
 
@@ -289,7 +291,7 @@ class BaseFieldMixin:
     For use with a view using SingleObjetMixin or MultipleObjectMixin
     """
 
-    model: Model  # Help type hinting to identify the intended base classes
+    model: Type[ModelBase]  # Help type hinting to identify the intended base classes
     fields: Optional[List[Any]] = None  # Liskov made me do it
     exclude: Optional[List[Any]] = None
 
@@ -332,7 +334,7 @@ class InlineMixin:
     """
 
     # TODO: Consider merging with FormFieldMixin when adding support for nested inlines
-    model: Model  # Help type hinting to identify the intended base classes
+    model: Type[ModelBase]  # Help type hinting to identify the intended base classes
     get_form_kwargs: Callable  # Help type hinting
     inlines: Optional[List[Inline]] = None
 

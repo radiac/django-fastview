@@ -16,7 +16,7 @@ from .views.mixins import AbstractFastView
 
 
 if TYPE_CHECKING:
-    from django.db.models import Model
+    from django.db.models.base import ModelBase
     from django.urls.resolvers import CheckURLMixin
 
 
@@ -70,9 +70,9 @@ class ViewGroup(metaclass=ViewGroupType):
     permission: Optional[Permission]
 
     # All groups must define an index view
-    index_view: Type[View]
+    index_view: AbstractFastView
 
-    views: Dict[str, Type[View]]
+    views: Dict[str, AbstractFastView]
 
     action_links: Optional[List[str]] = None
 
@@ -274,16 +274,16 @@ class ViewGroup(metaclass=ViewGroupType):
 
 class ModelViewGroup(ViewGroup):
     # TODO: Move all of this into the base ViewGroup, except ``action_links`` and views
-    model: Model
+    model: Type[ModelBase]
     id_field_name = "pk"
     owner_field_name = None
     action_links = ["index", "create", "update", "delete"]
 
-    index_view: Type[View] = ListView
-    detail_view: Type[View] = DetailView
-    create_view: Optional[Type[View]] = CreateView
-    update_view: Optional[Type[View]] = UpdateView
-    delete_view: Optional[Type[View]] = DeleteView
+    index_view: AbstractFastView = ListView
+    detail_view: AbstractFastView = DetailView
+    create_view: Optional[AbstractFastView] = CreateView
+    update_view: Optional[AbstractFastView] = UpdateView
+    delete_view: Optional[AbstractFastView] = DeleteView
 
     def _get_view_attrs(self, name: str, view: View) -> Dict[str, Any]:
         """
