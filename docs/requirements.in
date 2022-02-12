@@ -1,4 +1,8 @@
+# Core build requirements
 sphinx
 # sphinx-autobuild
 sphinx-gitref
 -e git+https://github.com/radiac/sphinx_radiac_theme.git#egg=sphinx_radiac_theme
+
+# API dependencies
+django~=3.2

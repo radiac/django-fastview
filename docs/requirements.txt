@@ -8,15 +8,20 @@
     # via -r requirements.in
 alabaster==0.7.12
     # via sphinx
+asgiref==3.5.0
+    # via django
 babel==2.9.1
     # via sphinx
 certifi==2021.10.8
     # via requests
 charset-normalizer==2.0.10
     # via requests
+django==3.2.12
+    # via -r requirements.in
 docutils==0.17.1
     # via
     #   sphinx
+    #   sphinx-gitref
     #   sphinx-radiac-theme
 idna==3.3
     # via requests
@@ -33,7 +38,9 @@ pygments==2.11.2
 pyparsing==3.0.6
     # via packaging
 pytz==2021.3
-    # via babel
+    # via
+    #   babel
+    #   django
 requests==2.27.1
     # via sphinx
 snowballstemmer==2.2.0
@@ -41,7 +48,10 @@ snowballstemmer==2.2.0
 sphinx==4.3.2
     # via
     #   -r requirements.in
+    #   sphinx-gitref
     #   sphinx-radiac-theme
+sphinx-gitref==0.1.0
+    # via -r requirements.in
 sphinxcontrib-applehelp==1.0.2
     # via sphinx
 sphinxcontrib-devhelp==1.0.2
@@ -54,6 +64,8 @@ sphinxcontrib-qthelp==1.0.3
     # via sphinx
 sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
+sqlparse==0.4.2
+    # via django
 urllib3==1.26.8
     # via requests
 
