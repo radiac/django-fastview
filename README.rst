@@ -10,7 +10,12 @@ Flexible view system with built-in HTMX support.
 .. image:: https://coveralls.io/repos/radiac/django-fastview/badge.svg?branch=master&service=github
     :target: https://coveralls.io/github/radiac/django-fastview?branch=master
 
+.. image:: https://readthedocs.org/projects/django-fastview/badge/?version=latest
+    :target: https://django-fastview.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 * Project site: http://radiac.net/projects/django-fastview/
+* Documentation: https://django-fastview.readthedocs.io/
 * Source code: https://github.com/radiac/django-fastview
 * Requires Python 3.7 or later and Django 2.2 or later
 
