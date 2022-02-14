@@ -59,7 +59,12 @@ There are all sorts of things you can do from here:
 
 * The views are all based on Django's generic class-based views, so they're easy to
 customise
+* Easy and flexible permissions to control who can do what
 
+
+See the `Tutorial`__ in the documentation for more details.
+
+__ https://django-fastview.readthedocs.io/en/latest/tutorial/index.html
 
 
 Quickstart
@@ -80,7 +85,9 @@ Quickstart
    process.
 
 
-See Getting Started in the documentation for more details.
+See `Getting Started`__ in the documentation for more details.
+
+__ https://django-fastview.readthedocs.io/en/latest/get_started.html
 
 
 
