@@ -18,6 +18,30 @@ def formset_pk_name(formset):
     return formset.model._meta.pk.name
 
 
+@register.simple_tag(takes_context=True)
+def urlparams(context, **kwargs):
+    """
+    Update the current GET params with the specified values, and return an URL-encoded
+    string, preserving other params.
+
+    Pass a ``None`` value to remove an existing param if it exists
+
+    Usage::
+
+        <a href="{% url .. %}?{% urlparams foo=bar remove=None %}">
+    """
+    params = context["request"].GET.copy()
+    # Can't call params.update() - a QueryDict appends to existing, doesn't overwrite
+    for key, value in kwargs.items():
+        if value is None:
+            if value in params:
+                del params[key]
+        else:
+            params[key] = value
+    querystring = params.urlencode()
+    return querystring
+
+
 @register.tag
 def fragment(parser, token):
     """

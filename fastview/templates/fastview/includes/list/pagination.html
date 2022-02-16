@@ -1,3 +1,5 @@
+{% load fastview %}
+
 <div class="fastview-pagination">
 {% spaceless %}
 
@@ -5,7 +7,7 @@
 {% if page_range %}
 
   {% if page_obj.has_previous %}
-    <li><a href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+    <li><a href="?{% urlparams page=page_obj.previous_page_number %}">&laquo;</a></li>
   {% else %}
     <li><span>&laquo;</span></li>
   {% endif %}
@@ -17,13 +19,13 @@
       {% if i == page_obj.paginator.ELLIPSIS %}
         <li><span>{{ i }}</span></li>
       {% else %}
-        <li><a href="?page={{ i }}">{{ i }}</a></li>
+        <li><a href="?{% urlparams page=i %}">{{ i }}</a></li>
       {% endif %}
     {% endif %}
   {% endfor %}
 
   {% if page_obj.has_next %}
-    <li><a href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+    <li><a href="?{% urlparams page=page_obj.next_page_number %}">&raquo;</a></li>
   {% else %}
     <li><span>&raquo;</span></li>
   {% endif %}
@@ -32,15 +34,15 @@
   {# django.VERSION < (3, 2, 0) #}
 
   {% if page_obj.has_previous %}
-    <li><a href="?page=1">&laquo; First</a></li>
-    <li><a href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+    <li><a href="?{% urlparams page="1" %}">&laquo; First</a></li>
+    <li><a href="?{% urlparams page=page_obj.previous_page_number %}">Previous</a></li>
   {% endif %}
 
   <li><span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
 
   {% if page_obj.has_next %}
-    <li><a href="?page={{ page_obj.next_page_number }}">Next</a></li>
-    <li><a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a></li>
+    <li><a href="?{% urlparams page=page_obj.next_page_number %}">Next</a></li>
+    <li><a href="?{% urlparams page=page_obj.paginator.num_pages %}">Last &raquo;</a></li>
   {% endif %}
 
 {% endif %}
