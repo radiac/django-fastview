@@ -9,10 +9,10 @@ from typing import Dict, List, Optional, Union
 import django
 from django.contrib import messages
 from django.core.exceptions import FieldDoesNotExist
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from django.views import generic
 
-from ..constants import PARAM_LIMIT, PARAM_ORDER
+from ..constants import PARAM_LIMIT, PARAM_ORDER, PARAM_SEARCH
 from .display import ObjectValue
 from .filters import Filter, FilterError, field_to_filter_class
 from .mixins import (
@@ -72,6 +72,9 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
     #:          'field_name',  # MyModel.field_name
     #:          CustomFilter(...), # :class:`fastview.views.filters.Filter` subclass
     filters: Optional[List[Union[str, Filter]]] = None
+
+    #: List of fields to search
+    search_fields: Optional[List[str]] = None
 
     #: Context variable name for the annotated object list.
     context_annotated_name = "annotated_object_list"
@@ -143,6 +146,11 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
                     except FilterError as e:
                         messages.error(self.request, str(e))
 
+        # Search
+        search_query = self.request.GET.get(PARAM_SEARCH, "")
+        if search_query:
+            qs = self.search_queryset(search_query, qs)
+
         # Order
         ordering = self.get_ordering()
         if ordering:
@@ -162,6 +170,33 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
             if limit:
                 qs = qs[:limit]
 
+        return qs
+
+    def search_queryset(self, search_query: str, qs: QuerySet) -> QuerySet:
+        if not self.search_fields:
+            return qs
+
+        rules = Q()
+        for field in self.search_fields:
+            # Add __icontains to the field, unless it already specifies a string rule
+            if "__" in field:
+                suffix = field.rsplit("__", 1)[1]
+            else:
+                suffix = ""
+            if not suffix or suffix not in [
+                "exact",
+                "iexact",
+                "contains",
+                "icontains",
+                "startswith",
+                "istartswith",
+                "endswith",
+                "iendswith",
+            ]:
+                field = f"{field}__icontains"
+            rules |= Q(**{field: search_query})
+
+        qs = qs.filter(rules)
         return qs
 
     def get_ordering(self):
@@ -211,6 +246,7 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
         context[self.context_annotated_name] = self.object_annotator_factory(objects)
 
         context["filters"] = self.request_filters.values()
+        context["PARAM_SEARCH"] = PARAM_SEARCH
 
         return context
 

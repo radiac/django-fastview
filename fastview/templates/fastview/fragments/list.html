@@ -1,13 +1,29 @@
+{% load i18n %}
 <div class="fastview-list-data">
 
 {% block actions_container %}
-<ul class="fastview-actions">
-  {% block actions %}
-    {% for label, url in action_links %}
-      <li><a href="{{ url }}">{{ label }}</a></li>
-    {% endfor %}
-  {% endblock %}
-</ul>
+<div class="fastview-list-control">
+  <ul class="fastview-actions">
+    {% block actions %}
+      {% for label, url in action_links %}
+        <li><a href="{{ url }}">{{ label }}</a></li>
+      {% endfor %}
+    {% endblock %}
+  </ul>
+  {% if view.search_fields %}
+    <div class="fastview-search">
+      <form action="." method="GET">
+        <input type="text" name="q" placeholder="{% translate "Search" %}" value="{{ request.GET.q }}">
+        <button type="submit">{% translate "Search" %}</button>
+        {% for param, value in request.GET.items %}
+          {% if param != PARAM_SEARCH %}
+            <input type="hidden" name="{{ param }}" value="{{ value }}">
+          {% endif %}
+        {% endfor %}
+      </form>
+    </div>
+  {% endif %}
+</div>
 {% endblock %}
 
 <table class="fastview-list-table">
