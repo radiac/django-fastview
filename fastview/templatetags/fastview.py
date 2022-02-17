@@ -13,8 +13,22 @@ from django.utils.safestring import mark_safe
 register = template.Library()
 
 
+@register.simple_tag(name="breakpoint", takes_context=True)
+def dev_breakpoint(context):
+    """
+    Internal developer tag to help debug templates
+    """
+    breakpoint()
+    return ""
+
+
 @register.filter
 def formset_pk_name(formset):
+    """
+    Get the name of the primary key field for the given formset
+
+    Can't access _meta within a template
+    """
     return formset.model._meta.pk.name
 
 

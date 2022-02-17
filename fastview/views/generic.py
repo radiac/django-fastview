@@ -79,6 +79,9 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
     #: Context variable name for the annotated object list.
     context_annotated_name = "annotated_object_list"
 
+    #: Ordering params found in the request when getting the queryset
+    request_ordering: Optional[Dict[str, str]] = None
+
     def get_filters(self) -> Dict[str, Filter]:
         """
         Build filter list by looking up field strings and converting to Filter instances
@@ -204,6 +207,7 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
         Build queryset ordering rule from the CSV list of DisplayValue slugs in
         ``request.GET[PARAM_ORDER]``
         """
+        self.request_ordering = {}
         if PARAM_ORDER not in self.request.GET:
             return None
 
@@ -216,6 +220,7 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
             if slug.startswith("-"):
                 order = "-"
                 slug = slug[1:]
+            self.request_ordering[slug] = order
 
             # Find DisplayValue for this slug, and build ordering rule
             displayvalue = self.resolve_displayvalue_slug(slug)
@@ -233,7 +238,6 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
         """
         context = super().get_context_data(**kwargs)
 
-        # Generator to return object list with permissions and iterable fields
         if self.paginate_by:
             page_obj = context["page_obj"]
             if django.VERSION >= (3, 2, 0):
@@ -243,9 +247,23 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
             objects = page_obj
         else:
             objects = context["object_list"]
+
+        # Generator to return object list with permissions and iterable fields
         context[self.context_annotated_name] = self.object_annotator_factory(objects)
 
         context["filters"] = self.request_filters.values()
+
+        context["label_orders"] = []
+        for field in self.get_fields():
+            label = field.get_label(self)
+            slug = field.get_slug(self)
+            current_order = self.request_ordering.get(slug, None)
+            if current_order is None or current_order == "-":
+                param_value = slug
+            else:
+                param_value = f"-{slug}"
+            context["label_orders"].append((label, current_order, param_value))
+
         context["PARAM_SEARCH"] = PARAM_SEARCH
 
         return context

@@ -410,6 +410,7 @@ class DisplayFieldMixin(BaseFieldMixin):
         """
         Return a list of DisplayValue fields
         """
+        # Try cache
         if self._displayvalues is not None:
             return self._displayvalues
 
@@ -435,13 +436,14 @@ class DisplayFieldMixin(BaseFieldMixin):
                     raise ValueError(f'Unknown field "{field}"')
             display_values.append(field)
 
+        # Set cache and return
         self._displayvalues = display_values
         return display_values
 
     @property
     def labels(self):
         """
-        Return labels for the fields
+        Return labels for the display fields
         """
         return [field.get_label(self) for field in self.get_fields()]
 

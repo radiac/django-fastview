@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load fastview i18n %}
 <div class="fastview-list-data">
 
 {% block actions_container %}
@@ -29,8 +29,9 @@
 <table class="fastview-list-table">
   <thead>
     <tr>
-      {% for label in view.labels %}
-        <th>{{ label }}</th>
+      {% for label, current_order, param_value in label_orders %}
+        <th><a href="?{% urlparams o=param_value %}">{{ label }}{% if current_order == "" %} &#8593;{% elif current_order == '-' %}
+&#8595{% endif %}</a></th>
       {% endfor %}
       <th></th>
     </tr>
