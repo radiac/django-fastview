@@ -14,12 +14,6 @@ Flexible view system with built-in HTMX support.
     :target: https://django-fastview.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-* Project site: http://radiac.net/projects/django-fastview/
-* Documentation: https://django-fastview.readthedocs.io/
-* Source code: https://github.com/radiac/django-fastview
-* Requires Python 3.7 or later and Django 2.2 or later
-
-
 Fastview slashes development time for modern hybrid frontends - build comprehensive yet
 customisable CRUD views in a couple of lines, with built-in HTMX support.
 
@@ -31,6 +25,12 @@ customisable CRUD views in a couple of lines, with built-in HTMX support.
 
 Note: this is an alpha release; expect feature and API changes in future versions. Check
 upgrade notes for instructions when upgrading.
+
+
+* Project site: http://radiac.net/projects/django-fastview/
+* Documentation: https://django-fastview.readthedocs.io/
+* Source code: https://github.com/radiac/django-fastview
+* Requires Python 3.7 or later and Django 2.2 or later
 
 
 Example
