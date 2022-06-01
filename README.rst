@@ -14,12 +14,6 @@ Flexible view system with built-in HTMX support.
     :target: https://django-fastview.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-* Project site: http://radiac.net/projects/django-fastview/
-* Documentation: https://django-fastview.readthedocs.io/
-* Source code: https://github.com/radiac/django-fastview
-* Requires Python 3.7 or later and Django 2.2 or later
-
-
 Fastview slashes development time for modern hybrid frontends - build comprehensive yet
 customisable CRUD views in a couple of lines, with built-in HTMX support.
 
@@ -27,10 +21,16 @@ customisable CRUD views in a couple of lines, with built-in HTMX support.
 * All views are class-based, so they're quick and easy to customise
 * Default templates are designed to be customised or replaced to fit your design
 * Advanced permission system allows fine-grained row-level access control
-* Built-in support for HTMX, inline model formsets and more
+* Built-in support for HTMX (coming soon), inline model formsets and more
 
 Note: this is an alpha release; expect feature and API changes in future versions. Check
 upgrade notes for instructions when upgrading.
+
+
+* Project site: http://radiac.net/projects/django-fastview/
+* Documentation: https://django-fastview.readthedocs.io/
+* Source code: https://github.com/radiac/django-fastview
+* Requires Python 3.7 or later and Django 2.2 or later
 
 
 Example
@@ -57,8 +57,7 @@ under the ``/wiki/`` path on your site.
 
 There are all sorts of things you can do from here:
 
-* The views are all based on Django's generic class-based views, so they're easy to
-customise
+* The views are all based on Django's generic class-based views, so they're easy to customise
 * Easy and flexible permissions to control who can do what
 
 
@@ -140,7 +139,7 @@ Build a more complex view group with custom view classes and complex access cont
     ]
 
 You may then want to create a custom templates at ``templates/myblog/blog/list.html``
-``templates/myblog/blog/detail.html``to change the way blog posts are rendered.
+and ``templates/myblog/blog/detail.html`` to change the way blog posts are rendered.
 
 For more details see the main documentation.
 
