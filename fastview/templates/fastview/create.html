@@ -3,7 +3,7 @@
 
 {% block fastview_content %}
 
-<form method="post">{% csrf_token %}
+<form method="post" enctype="multipart/form-data">{% csrf_token %}
   <fieldset class="primary">
   {{ form.non_field_errors }}
   {{ form.as_p }}

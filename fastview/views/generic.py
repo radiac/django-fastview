@@ -82,6 +82,12 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
     #: Ordering params found in the request when getting the queryset
     request_ordering: Optional[Dict[str, str]] = None
 
+    def dispatch(self, request, *args, **kwargs):
+        # Set up request caches here in case a subclass overrides something carelessly
+        self.request_filters = {}
+        self.request_ordering = {}
+        return super().dispatch(request, *args, **kwargs)
+
     def get_filters(self) -> Dict[str, Filter]:
         """
         Build filter list by looking up field strings and converting to Filter instances
@@ -207,7 +213,6 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
         Build queryset ordering rule from the CSV list of DisplayValue slugs in
         ``request.GET[PARAM_ORDER]``
         """
-        self.request_ordering = {}
         if PARAM_ORDER not in self.request.GET:
             return None
 
@@ -235,6 +240,9 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
 
             annotated_object_list: List of (object, Can, fields) tuples
             filters: List of filters, bound to any query arguments
+            page_range: Paginator page range (Django 3.2+)
+            label_orders: List of (label, current_order, param_value) tuples for
+                links in the table header
         """
         context = super().get_context_data(**kwargs)
 

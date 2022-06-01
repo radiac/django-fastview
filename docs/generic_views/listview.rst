@@ -2,15 +2,27 @@
 ListView
 ========
 
+The Fastview generic ``ListView`` adds support for admin-style filtering, searching and
+ordering, with a default template similar to the Django admin changelist. These can all
+be changed and customised as necessary.
 
-.. autoclass:: fastview.views.generics.ListView
-	:members:
-	:show-inheritance:
+
+Templates
+=========
+
+The ``ListView`` follows Fastview's standard :ref:`template lookup rules <templates__lookup>`
+
+* annotated objects
+* filters
+* search_fields
+* page_range
+* label_orders
 
 
-* ``fields`` supports strings and :doc:`display`
-* the template has ``annotated_objects``, a list of :doc:`annotated`
-* it can have ``filters``
+Display fields
+==============
+
+
 
 
 Filters
@@ -116,3 +128,10 @@ There are few things going on here:
 * The instantiated filter class can then be put in the ``filters`` array in the order
   you want the filters to be shown.
 
+
+API reference
+=============
+
+.. autoclass:: fastview.views.generic.ListView
+	:members:
+	:show-inheritance:
