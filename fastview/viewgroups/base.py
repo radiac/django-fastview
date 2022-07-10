@@ -9,10 +9,10 @@ from django.views.generic import View
 from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.list import MultipleObjectMixin
 
-from .constants import INDEX_VIEW, OBJECT_VIEW, VIEW_SUFFIX
-from .permissions import Permission
-from .views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
-from .views.mixins import AbstractFastView
+from ..constants import INDEX_VIEW, OBJECT_VIEW, VIEW_SUFFIX
+from ..permissions import Permission
+from ..views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+from ..views.mixins import AbstractFastView
 
 
 if TYPE_CHECKING:
@@ -132,7 +132,7 @@ class ViewGroup(metaclass=ViewGroupType):
             "action": name,
         }
 
-    def include(self, namespace):
+    def include(self, namespace=None):
         """
         Call to insert ViewGroup into urls
 
@@ -150,6 +150,8 @@ class ViewGroup(metaclass=ViewGroupType):
         # Build response that urlpatterns expects
         urls = self.get_urls()
         # TODO: pick up app namespace from originating app
+        if namespace is None:
+            return include(urls)
         app_namespace = "fastview"
         return include((urls, app_namespace), namespace=namespace)
 
