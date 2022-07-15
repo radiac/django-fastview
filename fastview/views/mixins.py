@@ -128,7 +128,7 @@ class FastViewMixin(AbstractFastView):
         self._as_fragment = as_fragment
         return super().dispatch(request, *args, **kwargs)
 
-    def get_template_names(self) -> List[str]:
+    def get_template_names(self, as_fragment=False) -> List[str]:
         # Get default template names
         names = super().get_template_names()
         extra = []
@@ -143,13 +143,13 @@ class FastViewMixin(AbstractFastView):
         extra.append(self.default_template_name)
 
         names += extra
-        if not self._as_fragment:
+        if not as_fragment and not self._as_fragment:
             return names
 
         # Convert to use fragment templates
         fragment_names = []
         if self.fragment_template_name is not None:
-            fragment_names = [self.templatetag_template_name]
+            fragment_names = [self.fragment_template_name]
 
         for name in names:
             parts = name.split("/")
@@ -157,6 +157,9 @@ class FastViewMixin(AbstractFastView):
             fragment_names.append(name)
 
         return fragment_names
+
+    def get_fragment_template_names(self) -> List[str]:
+        return self.get_template_names(as_fragment=True)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

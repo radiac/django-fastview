@@ -6,7 +6,7 @@
   {% if filters %}
     {% include "fastview/includes/list/filter.html" %}
   {% endif %}
-  {% include "fastview/fragments/list.html" %}
+  {% include view.get_fragment_template_names %}
 </div>
 
 {% endblock %}

@@ -1,0 +1,36 @@
+/*
+** Control bar
+*/
+
+.fastview-list-control {
+  display: flex;
+  margin: 1rem 0;
+}
+
+.fastview-actions {
+  flex: 1 1 auto;
+  display: flex;
+  margin: 0;
+  list-style: none;
+
+  li {
+    flex: 0 0 auto;
+    list-style: none;
+    margin: 0 1rem 0 0;
+    padding: 0;
+  }
+}
+
+.fastview-pagination {
+  ul {
+    margin: 1rem 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: inline-block;
+    margin: 0 0.25rem;
+    padding: 0;
+  }
+}

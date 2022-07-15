@@ -1,0 +1,22 @@
+<ul class="fastview-filter__tree">
+{% for value, label, url, selected, child_selected, children in choices %}
+  <li>
+    {% if children is not None %}
+      <details{% if selected or child_selected %} open{% endif %}>
+        <summary>
+    {% endif %}
+
+        {% if selected %}
+          {{ label }}
+        {% else %}
+          <a href="{{ url }}">{{ label }}</a>
+        {% endif %}
+
+    {% if children is not None %}
+        </summary>
+        {% include "fastview/filters/tree.html" with choices=children level=level|add:1 is_open=selected %}
+      </details>
+    {% endif %}
+  </li>
+{% endfor %}
+</ul>
