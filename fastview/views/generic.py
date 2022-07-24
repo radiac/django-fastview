@@ -35,7 +35,7 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
 
     #: The default fragment template name
     #: Used for fragment rendering and directly in the container template
-    fragment_template_name = "fastview/fragments/list.html"
+    # fragment_template_name = "fastview/fragments/list.html"
 
     #: The page title, passed to template context for use in page title and headers.
     #: See :meth:`get_title` for more details

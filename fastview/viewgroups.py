@@ -66,6 +66,9 @@ class ViewGroup(metaclass=ViewGroupType):
     # Template root path
     template_root: Optional[str] = None
 
+    # Base template name for view templates to extend
+    base_template_name: str = "fastview/base.html"
+
     # Permission to apply to all views (overridden by view-specific permissions)
     permission: Optional[Permission]
 
@@ -197,7 +200,7 @@ class ViewGroup(metaclass=ViewGroupType):
     def get_action_links(self):
         return self.action_links
 
-    def get_context_data(self, view: View, **context: Dict[str, Any]) -> Dict[str, Any]:
+    def get_context_data(self, view: View, **context: Any) -> Dict[str, Any]:
         """
         Get additional context data for the view
         """
@@ -245,7 +248,11 @@ class ViewGroup(metaclass=ViewGroupType):
                 action_link_data, key=lambda data: action_links.index(data[0])
             )
 
+        context["view"] = view
         context["action_links"] = action_links_factory(action_link_data)
+
+        if context.get("base_template_name") is None:
+            context["base_template_name"] = self.base_template_name
 
         return context
 
