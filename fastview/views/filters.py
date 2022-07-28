@@ -17,19 +17,20 @@ class FilterError(ValueError):
     pass
 
 
-class Filter:
+ChoiceType = Tuple[str, str]
+ChoicesType = Iterable[ChoiceType]
+TreeListType = List[Tuple[ChoiceType, "TreeListType"]]
+
+
+class BaseFilter:
     """
     Base filter with arbitrary text matching
     """
 
     view: AbstractFastView = None
-
     param: str = None
     field_name: str = None
     label: str = None
-    choices: Optional[Iterable[Tuple[Any, str]]] = None
-    _choices: Optional[Iterable[Tuple[Any, str]]] = None
-    value: str = ""
     value: str = ""
     template_name: str = "fastview/filters/choices.html"
     ignore_invalid = False
@@ -39,7 +40,6 @@ class Filter:
         param: str,
         field_name: str = None,
         label: str = None,
-        choices: Optional[Iterable[Tuple[Any, str]]] = None,
     ):
         self.param = param
         self.field_name = field_name or param
@@ -49,10 +49,7 @@ class Filter:
         else:
             self.label = param.replace("_", " ").title()
 
-        if choices is not None:
-            self.choices = choices
-
-    def bind(self, value: Any) -> Filter:
+    def bind(self, value: Any) -> BaseFilter:
         """
         Create a copy of this filter and bind it to a submitted value
 
@@ -77,7 +74,7 @@ class Filter:
 
         return kwargs
 
-    def clone(self) -> Filter:
+    def clone(self) -> BaseFilter:
         """
         Make a clean copy of this filter, without a value
         """
@@ -90,14 +87,6 @@ class Filter:
         """
         Clean a value and store it
         """
-        choices = self.get_choices()
-        lookup = dict(choices)
-        if value not in lookup.keys():
-            if self.ignore_invalid:
-                value = ""
-            else:
-                raise FilterError(f"Invalid value for filter {self.label}")
-
         self.value = value
 
     def get_template_name(self):
@@ -116,14 +105,78 @@ class Filter:
         return template.render(context)
 
     def get_context(self) -> Dict["str", Any]:
-        choices_with_urls = self.generate_choices_with_urls()
         context = {
             "filter": self,
-            "choices": choices_with_urls,
         }
         return context
 
-    def get_choices(self):
+    def get_all_choice(self) -> ChoiceType:
+        """
+        Return an "All" option (value, label) tuple
+        """
+        return ("", _("All"))
+
+    @cached_property
+    def model(self):
+        if not self.view:
+            raise FilterError(
+                f"Filter {self.label} initiated incorrectly, view unknown"
+            )
+        if not hasattr(self.view, "model"):
+            raise FilterError(f"View for filter {self.label} has no model")
+        return self.view.model
+
+    @cached_property
+    def model_field(self):
+        try:
+            field = self.model._meta.get_field(self.field_name)
+        except models.FieldDoesNotExist:
+            raise FilterError(
+                f"Named field for filter {self.label} does not match a model field"
+            )
+
+        return field
+
+
+class Filter(BaseFilter):
+    """
+    Base filter with arbitrary text matching
+    """
+
+    choices: Optional[ChoicesType] = None
+    _choices: Optional[ChoicesType] = None
+
+    def __init__(
+        self,
+        param: str,
+        field_name: str = None,
+        label: str = None,
+        choices: Optional[ChoicesType] = None,
+    ):
+        super().__init__(param=param, field_name=field_name, label=label)
+        if choices is not None:
+            self.choices = choices
+
+    def set_value(self, value: str):
+        """
+        Clean a value and store it
+        """
+        choices = self.get_choices()
+        lookup = dict(choices)
+        if value not in lookup.keys():
+            if self.ignore_invalid:
+                value = ""
+            else:
+                raise FilterError(f"Invalid value for filter {self.label}")
+
+        self.value = value
+
+    def get_context(self) -> Dict["str", Any]:
+        context = super().get_context()
+        context["choices"] = self._generate_choices_with_urls()
+        return context
+
+    def get_choices(self) -> ChoicesType:
         """
         Get choices for use in validation and template rendering
 
@@ -156,29 +209,8 @@ class Filter:
             # Values from this model
             choices = self.get_local_choices()
 
-        self._choices = [("", _("All"))] + choices
+        self._choices = [self.get_all_choice()] + choices
         return self._choices
-
-    @cached_property
-    def model(self):
-        if not self.view:
-            raise FilterError(
-                f"Filter {self.label} initiated incorrectly, view unknown"
-            )
-        if not hasattr(self.view, "model"):
-            raise FilterError(f"View for filter {self.label} has no model")
-        return self.view.model
-
-    @cached_property
-    def model_field(self):
-        try:
-            field = self.model._meta.get_field(self.field_name)
-        except models.FieldDoesNotExist:
-            raise FilterError(
-                f"Named field for filter {self.label} does not match a model field"
-            )
-
-        return field
 
     def get_local_choices(self):
         """
@@ -192,7 +224,7 @@ class Filter:
         choices = [(str(val), str(val)) for val in vals]
         return choices
 
-    def get_related_choices(self):
+    def get_related_choices(self) -> ChoicesType:
         """
         Return a queryset of the related model for use by get_choices
         """
@@ -205,7 +237,16 @@ class Filter:
         qs = related_model.objects.all()
         return qs
 
-    def generate_choices_with_urls(self):
+    def _generate_choices_with_urls(self):
+        """
+        Template choice generator
+
+        Called by get_context
+
+        Returns tuples of::
+
+            (value, label, url, selected)
+        """
         if not self.view:
             raise FilterError(f"Filter {self.label} has no view, incorrect usage")
         if not hasattr(self.view, "request"):
@@ -219,8 +260,8 @@ class Filter:
 
         for value, label in choices:
             if not value:
-                # Delete from params. Use pop intead of del as we'll also cover the case
-                # where no param has been passed
+                # Delete from params. Use pop instead of del as we'll also cover the
+                # case where no param has been passed
                 params.pop(self.param, None)
             else:
                 params[self.param] = value
@@ -285,8 +326,8 @@ class DateHierarchyFilter(Filter):
     ``filter.year`` and ``filter.month`` are ``None`` or the integer values
     """
 
-    year: int = None
-    month: int = None
+    year: Optional[int] = None
+    month: Optional[int] = None
 
     template_name = "fastview/filters/date_hierarchy.html"
 
@@ -327,7 +368,7 @@ class DateHierarchyFilter(Filter):
         qs = self.model.objects.filter(**{f"{self.field_name}__year": self.year})
         # qs.dates() or qs.datetimes()
         dates = getattr(qs, date_method)(self.field_name, "month")
-        choices = [
+        choices: ChoicesType = [
             ("", _("All")),
         ]
         choices += [
@@ -397,6 +438,136 @@ class BooleanFilter(Filter):
             return qs
 
         return qs.filter(**{self.field_name: self.boolean})
+
+
+class TreeFilter(Filter):
+    """
+    Tree filter
+
+    Operates on a list of (parent, [child, child, ...]) tuples, where each child is a
+    similar tuple. Each parent and child object should be a tuple of (value, label)
+
+    For example::
+
+        [
+        ((value, label), [
+            ((child_value, label), []), ((child_value, label), [...]),
+        ]), ((value, label), []),
+    ]
+    """
+
+    tree: Optional[TreeListType] = None
+    template_name: str = "fastview/filters/tree.html"
+
+    def __init__(
+        self,
+        param: str,
+        field_name: str = None,
+        label: str = None,
+        tree: TreeListType = None,
+    ):
+        """
+        Take a tree object rather than choices
+        """
+        super().__init__(
+            param=param,
+            field_name=field_name,
+            label=label,
+        )
+        self.tree = tree
+
+    def get_context(self) -> Dict["str", Any]:
+        context: Dict["str", Any] = super().get_context()
+        context["choices"] = self._generate_choices_with_urls()
+        context["level"] = 1
+        return context
+
+    def get_tree(self) -> TreeListType:
+        if self.tree is None:
+            raise ValueError(f"Filter {self.label} has no tree")
+        return [self.get_all_choice()] + self.tree
+
+    def set_value(self, value: str):
+        """
+        Clean a value and store it
+        """
+        tree: TreeListType = self.get_tree()
+
+        # Check tree for valid value
+        stack = tree[:]
+        is_valid: bool = False
+        choice: ChoiceType
+        children: TreeListType
+        while stack:
+            choice, children = stack.pop(0)
+            choice_value, _ = self._choice_to_value_label(choice)
+            if choice_value == value:
+                is_valid = True
+                break
+
+            stack = children + stack
+
+        if not is_valid:
+            if self.ignore_invalid:
+                value = ""
+            else:
+                raise FilterError(f"Invalid value for filter {self.label}")
+
+        self.value = value
+
+    def _choice_to_value_label(self, choice) -> Tuple[str, str]:
+        return choice
+
+    def _generate_choices_with_urls(self):
+        """
+        Template choice generator
+
+        Called by get_context
+
+        Returns tuples of::
+
+            (value, label, url, selected, child_selected, children)
+
+        Where children is None, or another generator of the same tuples
+        """
+        if not self.view:
+            raise FilterError(f"Filter {self.label} has no view, incorrect usage")
+        if not hasattr(self.view, "request"):
+            raise FilterError(f"Filter {self.label} view has no request")
+
+        tree: TreeListType = self.get_tree()
+
+        request = self.view.request
+        base_url = request.path
+        params = request.GET.copy()
+
+        def generate_for_nodelist(nodes):
+            choice: ChoiceType
+            children: TreeListType
+
+            for choice, children in nodes:
+                value, label = self._choice_to_value_label(choice)
+
+                if not value:
+                    # Delete from params. Use pop instead of del as we'll also cover the
+                    # case where no param has been passed
+                    params.pop(self.param, None)
+                else:
+                    params[self.param] = value
+
+                selected = self.value == value
+                child_selected = self.value.startswith(f"{value}/")
+
+                yield (
+                    value,
+                    label,
+                    f"{base_url}?{params.urlencode()}",
+                    selected,
+                    child_selected,
+                    generate_for_nodelist(children) if children else None,
+                )
+
+        yield from generate_for_nodelist(tree)
 
 
 field_lookup = {

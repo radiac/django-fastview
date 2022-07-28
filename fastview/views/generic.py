@@ -33,6 +33,10 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
     #: The default template name
     default_template_name = "fastview/list.html"
 
+    #: The default fragment template name
+    #: Used for fragment rendering and directly in the container template
+    # fragment_template_name = "fastview/fragments/list.html"
+
     #: The page title, passed to template context for use in page title and headers.
     #: See :meth:`get_title` for more details
     title = "{verbose_name_plural}"
@@ -245,7 +249,6 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
                 links in the table header
         """
         context = super().get_context_data(**kwargs)
-
         if self.paginate_by:
             page_obj = context["page_obj"]
             if django.VERSION >= (3, 2, 0):

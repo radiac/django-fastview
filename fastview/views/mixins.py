@@ -42,14 +42,17 @@ class AbstractFastView(UserPassesTestMixin):
         Creates a new subclass of this View, with the attributes provided
         """
         # Collect attrs from the view and its bases
+        # TODO: This code should be removed
+        """
         base_attrs = {}
         mro = cls.mro()
         mro.reverse()
         for base_cls in mro:
             base_attrs.update(vars(base_cls))
+        """
 
         # Create a subclass of the original view with the new attributes
-        # cast because type inference can't tell we'll subclassing ourselves
+        # cast() because type inference can't tell we'll subclassing ourselves
         view = cast(AbstractFastView, type(cls.__name__, (cls,), attrs))
         return view
 
@@ -121,14 +124,20 @@ class FastViewMixin(AbstractFastView):
     action: Optional[str] = None
     action_label: Optional[str] = None
 
-    _as_fragment = False
-    fragment_template_name = None
+    # Track whether this is being called as a fragment
+    _as_fragment: bool = False
+
+    # Base template name for view templates to extend
+    base_template_name: Optional[str] = None
+
+    # Template name when rendering a fragment
+    fragment_template_name: Optional[str] = None
 
     def dispatch(self, request, *args, as_fragment=False, **kwargs):
         self._as_fragment = as_fragment
         return super().dispatch(request, *args, **kwargs)
 
-    def get_template_names(self) -> List[str]:
+    def get_template_names(self, as_fragment=False) -> List[str]:
         # Get default template names
         names = super().get_template_names()
         extra = []
@@ -143,13 +152,13 @@ class FastViewMixin(AbstractFastView):
         extra.append(self.default_template_name)
 
         names += extra
-        if not self._as_fragment:
+        if not as_fragment and not self._as_fragment:
             return names
 
         # Convert to use fragment templates
         fragment_names = []
         if self.fragment_template_name is not None:
-            fragment_names = [self.templatetag_template_name]
+            fragment_names = [self.fragment_template_name]
 
         for name in names:
             parts = name.split("/")
@@ -158,15 +167,19 @@ class FastViewMixin(AbstractFastView):
 
         return fragment_names
 
+    def get_fragment_template_names(self) -> List[str]:
+        return self.get_template_names(as_fragment=True)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         # Make the title available
         context["title"] = self.get_title()
+        context["base_template_name"] = self.base_template_name
 
         # Let the viewgroup extend the context
         if self.viewgroup:
-            context.update(self.viewgroup.get_context_data(self))
+            context = self.viewgroup.get_context_data(**context)
 
         return context
 
@@ -323,9 +336,29 @@ class BaseFieldMixin:
 
 
 class FormFieldMixin(BaseFieldMixin):
+    """
+    Mixin for form views
+    """
+
+    #: Allow collection of initial from GET parameters
+    initial_from_params: bool = False
+
     def get_form_class(self):
+        """
+        Set self.fields based on model fields
+        """
         self.fields = self.get_fields()
         return super().get_form_class()
+
+    def get_initial(self):
+        """
+        Collect initial values from GET parameters, if
+        ``self.initial_from_params == True``
+        """
+        initial = super().get_initial()
+        if self.initial_from_params:
+            initial.update(self.request.GET.dict())
+        return initial
 
 
 class InlineMixin:

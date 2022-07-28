@@ -1,4 +1,4 @@
-{% extends "fastview/base.html" %}
+{% extends base_template_name %}
 
 {% block fastview_content %}
 
@@ -6,7 +6,7 @@
   {% if filters %}
     {% include "fastview/includes/list/filter.html" %}
   {% endif %}
-  {% include "fastview/fragments/list.html" %}
+  {% include view.get_fragment_template_names %}
 </div>
 
 {% endblock %}
