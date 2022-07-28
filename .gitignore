@@ -2,6 +2,7 @@
 *.egg-info
 .tox
 .coverage*
+*.log
 htmlcov
 docs/_*
 build
@@ -10,4 +11,3 @@ example/db.sqlite3
 .mypy_cache
 .vscode
 node_modules/*
-fastview/static
