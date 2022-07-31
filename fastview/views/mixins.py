@@ -9,8 +9,10 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import AutoField
+from django.forms.models import ModelForm, modelform_factory
 from django.urls import reverse
 from django.utils.translation import gettext as _
+from django.views.generic.edit import ModelFormMixin
 
 from ..constants import INDEX_VIEW, TEMPLATE_FRAGMENT_SLUG
 from ..forms import InlineParentModelForm
@@ -335,7 +337,7 @@ class BaseFieldMixin:
         return fields
 
 
-class FormFieldMixin(BaseFieldMixin):
+class FormFieldMixin(BaseFieldMixin, ModelFormMixin):
     """
     Mixin for form views
     """
@@ -343,12 +345,20 @@ class FormFieldMixin(BaseFieldMixin):
     #: Allow collection of initial from GET parameters
     initial_from_params: bool = False
 
+    form_class: Optional[ModelForm] = None
+
     def get_form_class(self):
         """
         Set self.fields based on model fields
+
+        A simplified version of ModelFormMixin.get_form_class which expects a view.model
+        to be defined, and supports a view.form_class as well as view.fields.
+
+        Does NOT call super().get_form_class() - replacement logic to bypass errors
+        which no longer apply.
         """
         self.fields = self.get_fields()
-        return super().get_form_class()
+        return modelform_factory(self.model, form=self.form_class, fields=self.fields)
 
     def get_initial(self):
         """
