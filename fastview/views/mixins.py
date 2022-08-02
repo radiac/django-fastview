@@ -3,6 +3,7 @@ Mixins for fastviews
 """
 from __future__ import annotations
 
+from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Type, Union, cast
 
 from django.contrib.auth.mixins import UserPassesTestMixin
@@ -494,16 +495,49 @@ class DisplayFieldMixin(BaseFieldMixin):
 class SuccessUrlMixin(SuccessMessageMixin):
     """
     For views which have a success url
+
+    Start the success_url with a colon to refer to a viewgroup URL, eg::
+
+        success_url = ":index"
+        success_url = ":detail"
+        success_url = ":update"
+
+    If a viewgroup view operates on an object (is a subclass of ObjectFastViewMixin),
+    the current view's self.object will be used for path resolution.
     """
 
     success_message = _("%(model_name)s was saved successfully")
 
     def get_success_url(self):
+        namespace = self.request.resolver_match.namespace
+
+        if isinstance(self.success_url, str) and self.success_url.startswith(":"):
+            if not self.viewgroup:
+                raise ImproperlyConfigured(
+                    "Cannot redirect to a viewgroup URL outside a viewgroup."
+                )
+
+            # Look up view
+            view_name = self.success_url[1:]
+            view_cls = self.viewgroup.views.get(view_name)
+            if not view_cls:
+                raise ImproperlyConfigured(
+                    f"Viewgroup does not define a {view_name} view."
+                )
+
+            if issubclass(view_cls, ObjectFastViewMixin):
+                if not getattr(self, "object", None):
+                    raise ImproperlyConfigured("Could not find target object")
+
+                return reverse(f"{namespace}:{view_name}", args=[self.object.pk])
+
+            return reverse(f"{namespace}:{view_name}")
+
         try:
             return super().get_success_url()
         except ImproperlyConfigured:
             if self.viewgroup:
-                return reverse(f"{self.request.resolver_match.namespace}:{INDEX_VIEW}")
+                return reverse(f"{namespace}:{INDEX_VIEW}")
             raise
 
     def get_success_message(self, cleaned_data):

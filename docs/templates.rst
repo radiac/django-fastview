@@ -2,10 +2,44 @@
 Templates
 =========
 
+Base template
+=============
+
+Blocks
+------
+
+Fastview puts its content in a ``fastview_content`` block, and will provide the page
+title in the ``title`` context variable.
+
+All Fastview templates extend :gitref:`fastview/templates/fastview/base.html`, which in
+turn extends your site's ``templates/base.html``. You may want to override this by
+adding your own ``templates/fastview/base.html`` to map Fastview's content block to
+yours.
+
+
+Static assets
+-------------
+
+Fastview comes with some default styles for layout, and some JavaScript to manage things
+like inline formsets. See :doc:`frontend` for details.
+
+If your forms have widgets with their own CSS and JavaScript, you may also want to link
+to these in your templates - Fastview will not do this for you::
+
+    <head>
+      ...
+      {{ form.media.css }}
+    </head>
+    <body>
+      ...
+      {{ form.media.js }}
+    </body>
+
+
 .. _templates__lookup:
 
-Template lookup
-===============
+View template lookup
+====================
 
 All templated Fastview generic views look for templates in the same way:
 

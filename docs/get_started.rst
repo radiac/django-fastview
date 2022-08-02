@@ -17,7 +17,7 @@ Add to ``INSTALLED_APPS``::
         "fastview",
     ]
 
-Optional: add the default JavaScript and CSS to your templates::
+Optional: add the default Fastview JavaScript and CSS to your templates::
 
     <head>
       ...
@@ -26,7 +26,8 @@ Optional: add the default JavaScript and CSS to your templates::
     </head>
 
 * There is a corresponding npm module if you'd prefer to build fastview's frontend as
-  part of your existing frontend - see :doc:`frontend` for more details.
+  part of your existing frontend - see :doc:`frontend` for more details. See
+  :doc:`templates` for full customisation options.
 
 
 Your first view group
