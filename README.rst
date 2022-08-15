@@ -2,13 +2,13 @@
 Django Fastview
 ===============
 
-Flexible view system with built-in HTMX support.
+Flexible view system to help you build views quickly.
 
-.. image:: https://travis-ci.org/radiac/django-fastview.svg?branch=master
-    :target: https://travis-ci.org/radiac/django-fastview
+.. image:: https://github.com/radiac/django-fastview/actions/workflows/ci.yml/badge.svg
+    :target: https://github.com/radiac/django-fastview/actions/workflows/ci.yml
 
-.. image:: https://coveralls.io/repos/radiac/django-fastview/badge.svg?branch=master&service=github
-    :target: https://coveralls.io/github/radiac/django-fastview?branch=master
+.. image:: https://codecov.io/gh/radiac/django-fastview/branch/develop/graph/badge.svg?token=5VZNPABZ7E
+    :target: https://codecov.io/gh/radiac/django-fastview
 
 .. image:: https://readthedocs.org/projects/django-fastview/badge/?version=latest
     :target: https://django-fastview.readthedocs.io/en/latest/?badge=latest
@@ -27,7 +27,7 @@ Note: this is an alpha release; expect feature and API changes in future version
 upgrade notes for instructions when upgrading.
 
 
-* Project site: http://radiac.net/projects/django-fastview/
+* Project site: https://radiac.net/projects/django-fastview/
 * Documentation: https://django-fastview.readthedocs.io/
 * Source code: https://github.com/radiac/django-fastview
 * Requires Python 3.7 or later and Django 2.2 or later
@@ -36,13 +36,14 @@ upgrade notes for instructions when upgrading.
 Example
 =======
 
-Lets write a wiki where anyone can view, add, edit and delete pages::
+Lets write a wiki where anyone can view, add, edit and delete pages:
+
+.. code-block:: python
 
     # urls.py (for example purposes - normally define the viewgroup in app/views.py)
     from fastview.viewgroups import ModelViewGroup
     from fastview.permissions import Public
     from mywiki.models import Wiki
-
 
     class WikiViewGroup(ModelViewGroup):
         model = Wiki
@@ -93,14 +94,16 @@ __ https://django-fastview.readthedocs.io/en/latest/get_started.html
 Advanced example
 ----------------
 
-Build a more complex view group with custom view classes and complex access controls::
+Build a more complex view group with custom view classes and complex access controls:
+
+
+.. code-block:: python
 
     # urls.py (for example purposes)
     from fastview.viewgroups import ModelViewGroup
     from fastview.permissions import Public, Login, Staff, Owner, Django
     from myblog.models import Blog
     from myblog.views import BlogUpdateView, BlogPublishView
-
 
     class BlogViewGroup(ModelViewGroup):
         model = Blog
@@ -141,7 +144,9 @@ Build a more complex view group with custom view classes and complex access cont
 You may then want to create a custom templates at ``templates/myblog/blog/list.html``
 and ``templates/myblog/blog/detail.html`` to change the way blog posts are rendered.
 
-For more details see the main documentation.
+For more details see the `main documentation`__.
+
+__ https://django-fastview.readthedocs.io/
 
 
 More examples

@@ -18,10 +18,12 @@ Installing
 The easiest way to work on Fastview is to fork the project on github, then install it to
 a virtualenv::
 
-    virtualenv django-fastview
+    mkdir django-fastview
     cd django-fastview
-    source bin/activate
-    pip install -e git+git@github.com:USERNAME/django-fastview.git#egg=django-fastview[testing]
+    python3.10 -mvenv venv
+    source venv/bin/activate
+    pip install -e git+git@github.com:USERNAME/django-fastview.git#egg=django-fastview
+    pip install -r venv/src/django-fastview/tests/requirements.txt
 
 (replacing ``USERNAME`` with your username).
 
@@ -59,21 +61,21 @@ There are three commands::
 Testing
 =======
 
-It is greatly appreciated when contributions come with unit tests.
+Contributions which come with unit tests are likely to be merged more quickly. If you're
+fixing a problem, ideally you'd have a test which fails and proves the issue, then
+passes once your fix is in place.
 
-Use ``pytest`` to run the tests on your current installation, or ``tox`` to run it on
-the supported variants::
+Use ``pytest`` to run the tests on your current installation::
 
   cd path/to/django-fastview
   pytest
-  tox
 
-These will also generate a ``coverage`` HTML report.
+This will also generate a ``coverage`` HTML report.
 
 
 Credits
 =======
 
-Thanks to all contributors who are listed in ``fastview.__credits__``.
+Thanks to all contributors, who are listed in the :doc:`changelog`.
 
 The icons are from Remix Icon, https://remixicon.com/

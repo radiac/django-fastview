@@ -27,6 +27,7 @@ Changes:
 * Renamed ``fastview.groups`` to ``fastview.viewgroups``
 * Renamed ``fastview.views.generics`` to ``fastview.views.generic``
 * Removed imports from ``fastview.views``
+* Test dependencies have moved from ``setup.cfg`` to ``tests/requirements.txt``
 
 
 0.0.3, 2020-02-10
