@@ -9,12 +9,14 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import AutoField
-from django.urls import reverse
+from django.forms.models import ModelForm, modelform_factory
 from django.utils.translation import gettext as _
+from django.views.generic.edit import ModelFormMixin
 
 from ..constants import INDEX_VIEW, TEMPLATE_FRAGMENT_SLUG
 from ..forms import InlineParentModelForm
 from ..permissions import Denied, Permission
+from ..urls import viewgroup_reverse
 from .display import AttributeValue, DisplayValue
 from .objects import AnnotatedObject
 
@@ -42,14 +44,17 @@ class AbstractFastView(UserPassesTestMixin):
         Creates a new subclass of this View, with the attributes provided
         """
         # Collect attrs from the view and its bases
+        # TODO: This code should be removed
+        """
         base_attrs = {}
         mro = cls.mro()
         mro.reverse()
         for base_cls in mro:
             base_attrs.update(vars(base_cls))
+        """
 
         # Create a subclass of the original view with the new attributes
-        # cast because type inference can't tell we'll subclassing ourselves
+        # cast() because type inference can't tell we'll subclassing ourselves
         view = cast(AbstractFastView, type(cls.__name__, (cls,), attrs))
         return view
 
@@ -121,14 +126,25 @@ class FastViewMixin(AbstractFastView):
     action: Optional[str] = None
     action_label: Optional[str] = None
 
-    _as_fragment = False
-    fragment_template_name = None
+    # Track whether this is being called as a fragment
+    _as_fragment: bool = False
+
+    #: Base template name for view templates to extend
+    #: If not set, will be inherited from the ViewGroup
+    #: If not set and not part of a ViewGroup, will use ``default_base_template_name``
+    base_template_name: Optional[str] = None
+
+    #: Default base template name for templates, when no ``base_template_name`` is found
+    default_base_template_name: str = "fastview/base.html"
+
+    # Template name when rendering a fragment
+    fragment_template_name: Optional[str] = None
 
     def dispatch(self, request, *args, as_fragment=False, **kwargs):
         self._as_fragment = as_fragment
         return super().dispatch(request, *args, **kwargs)
 
-    def get_template_names(self) -> List[str]:
+    def get_template_names(self, as_fragment=False) -> List[str]:
         # Get default template names
         names = super().get_template_names()
         extra = []
@@ -143,13 +159,13 @@ class FastViewMixin(AbstractFastView):
         extra.append(self.default_template_name)
 
         names += extra
-        if not self._as_fragment:
+        if not as_fragment and not self._as_fragment:
             return names
 
         # Convert to use fragment templates
         fragment_names = []
         if self.fragment_template_name is not None:
-            fragment_names = [self.templatetag_template_name]
+            fragment_names = [self.fragment_template_name]
 
         for name in names:
             parts = name.split("/")
@@ -158,15 +174,21 @@ class FastViewMixin(AbstractFastView):
 
         return fragment_names
 
+    def get_fragment_template_names(self) -> List[str]:
+        return self.get_template_names(as_fragment=True)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         # Make the title available
         context["title"] = self.get_title()
+        context["base_template_name"] = (
+            self.base_template_name or self.default_base_template_name
+        )
 
         # Let the viewgroup extend the context
         if self.viewgroup:
-            context.update(self.viewgroup.get_context_data(self))
+            context = self.viewgroup.get_context_data(**context)
 
         return context
 
@@ -322,10 +344,38 @@ class BaseFieldMixin:
         return fields
 
 
-class FormFieldMixin(BaseFieldMixin):
+class FormFieldMixin(BaseFieldMixin, ModelFormMixin):
+    """
+    Mixin for form views
+    """
+
+    #: Allow collection of initial from GET parameters
+    initial_from_params: bool = False
+
+    form_class: Type[ModelForm] = ModelForm
+
     def get_form_class(self):
+        """
+        Set self.fields based on model fields
+
+        A simplified version of ModelFormMixin.get_form_class which expects a view.model
+        to be defined, and supports a view.form_class as well as view.fields.
+
+        Does NOT call super().get_form_class() - replacement logic to bypass errors
+        which no longer apply.
+        """
         self.fields = self.get_fields()
-        return super().get_form_class()
+        return modelform_factory(self.model, form=self.form_class, fields=self.fields)
+
+    def get_initial(self):
+        """
+        Collect initial values from GET parameters, if
+        ``self.initial_from_params == True``
+        """
+        initial = super().get_initial()
+        if self.initial_from_params:
+            initial.update(self.request.GET.dict())
+        return initial
 
 
 class InlineMixin:
@@ -373,7 +423,7 @@ class InlineMixin:
     def get_formset_kwargs(self, inline: Inline, **extra_kwargs):
         kwargs = self.get_form_kwargs()
         kwargs.update(extra_kwargs)
-        kwargs["initial"] = inline.get_initial(self)
+        kwargs["initial"] = inline.get_initial_from_view(view=self)
         return kwargs
 
 
@@ -387,8 +437,8 @@ class DisplayFieldMixin(BaseFieldMixin):
     fields: List[Union[str, DisplayValue]]
 
     # Caches
-    _displayvalues: List[DisplayValue] = None
-    _displayvalue_lookup: Dict[str, DisplayValue] = None
+    _displayvalues: Optional[List[DisplayValue]] = None
+    _displayvalue_lookup: Optional[Dict[str, DisplayValue]] = None
 
     def resolve_displayvalue_slug(self, slug):
         """
@@ -453,14 +503,25 @@ class SuccessUrlMixin(SuccessMessageMixin):
     For views which have a success url
     """
 
+    #: Success URL - supports viewgroup lookups using fastview.urls.viewgroup_reverse,
+    #: eg::
+    #:      success_url = ":index"
+    success_url: Optional[str]
+
+    #: Success message. In addition to standard get_success_message logic, this also
+    #: supports a ``model_name`` placeholder, for the model name for this view.
     success_message = _("%(model_name)s was saved successfully")
 
     def get_success_url(self):
+        # Handle namespaced URL
+        if self.success_url and self.success_url.startswith(":"):
+            return viewgroup_reverse(self.success_url, view=self)
+
         try:
             return super().get_success_url()
         except ImproperlyConfigured:
             if self.viewgroup:
-                return reverse(f"{self.request.resolver_match.namespace}:{INDEX_VIEW}")
+                return viewgroup_reverse(f":{INDEX_VIEW}", self)
             raise
 
     def get_success_message(self, cleaned_data):

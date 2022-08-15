@@ -66,11 +66,14 @@ class ViewGroup(metaclass=ViewGroupType):
     # Template root path
     template_root: Optional[str] = None
 
+    # Base template name for view templates to extend
+    base_template_name: str = "fastview/base.html"
+
     # Permission to apply to all views (overridden by view-specific permissions)
     permission: Optional[Permission]
 
     # All groups must define an index view
-    index_view: AbstractFastView
+    index_view: Type[AbstractFastView]
 
     views: Dict[str, AbstractFastView]
 
@@ -188,7 +191,7 @@ class ViewGroup(metaclass=ViewGroupType):
         """
         Build the URL pattern match for the given view name and view.
 
-        Called internally by `get_url_for_view()` has checked for `get_<name>_url()`.
+        Called internally by `get_url_pattern_for_view()` has checked for `get_<name>_url()`.
         """
         if name == INDEX_VIEW:
             route = ""
@@ -199,7 +202,7 @@ class ViewGroup(metaclass=ViewGroupType):
     def get_action_links(self):
         return self.action_links
 
-    def get_context_data(self, view: View, **context: Dict[str, Any]) -> Dict[str, Any]:
+    def get_context_data(self, view: View, **context: Any) -> Dict[str, Any]:
         """
         Get additional context data for the view
         """
@@ -247,7 +250,11 @@ class ViewGroup(metaclass=ViewGroupType):
                 action_link_data, key=lambda data: action_links.index(data[0])
             )
 
+        context["view"] = view
         context["action_links"] = action_links_factory(action_link_data)
+
+        if context.get("base_template_name") is None:
+            context["base_template_name"] = self.base_template_name
 
         return context
 
@@ -281,11 +288,11 @@ class ModelViewGroup(ViewGroup):
     owner_field_name = None
     action_links = ["index", "create", "update", "delete"]
 
-    index_view: AbstractFastView = ListView
-    detail_view: AbstractFastView = DetailView
-    create_view: Optional[AbstractFastView] = CreateView
-    update_view: Optional[AbstractFastView] = UpdateView
-    delete_view: Optional[AbstractFastView] = DeleteView
+    index_view: Type[AbstractFastView] = ListView
+    detail_view: Type[AbstractFastView] = DetailView
+    create_view: Optional[Type[AbstractFastView]] = CreateView
+    update_view: Optional[Type[AbstractFastView]] = UpdateView
+    delete_view: Optional[Type[AbstractFastView]] = DeleteView
 
     def _get_view_attrs(self, name: str, view: View) -> Dict[str, Any]:
         """

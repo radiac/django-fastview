@@ -36,7 +36,7 @@ class DisplayValue:
         """
         raise NotImplementedError()
 
-    def order_by(self, view: DisplayFieldMixin) -> str:
+    def get_order_by(self, view: DisplayFieldMixin) -> str:
         """
         Return the value as a safe HTML string
         """

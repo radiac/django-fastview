@@ -21,8 +21,9 @@ need to bundle it yourself - see :ref:`js-build-static` for more details.
 Using the pre-bundled static
 ============================
 
-Load the static resource in your template::
+Load the static resource in your template's ``<head>`` tag::
 
+  <link rel="stylesheet" type="text/css" href="{% static "fastview/index.css" %}">
   <script src="{% static "fastview/index.js" %}></script>
 
 

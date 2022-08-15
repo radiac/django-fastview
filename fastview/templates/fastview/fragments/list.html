@@ -13,8 +13,8 @@
   {% if view.search_fields %}
     <div class="fastview-search">
       <form action="." method="GET">
-        <input type="text" name="q" placeholder="{% translate "Search" %}" value="{{ request.GET.q }}">
-        <button type="submit">{% translate "Search" %}</button>
+        <input type="text" name="q" placeholder="{% trans "Search" %}" value="{{ request.GET.q }}">
+        <button type="submit">{% trans "Search" %}</button>
         {% for param, value in request.GET.items %}
           {% if param != PARAM_SEARCH %}
             <input type="hidden" name="{{ param }}" value="{{ value }}">
@@ -26,6 +26,7 @@
 </div>
 {% endblock %}
 
+{% block table_container %}
 <table class="fastview-list-table">
   <thead>
     <tr>
@@ -55,6 +56,7 @@
     {% endfor %}
   </tbody>
 </table>
+{% endblock %}
 
 {% block pagination %}
   {% if page_obj %}

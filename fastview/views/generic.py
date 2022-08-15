@@ -14,7 +14,7 @@ from django.views import generic
 
 from ..constants import PARAM_LIMIT, PARAM_ORDER, PARAM_SEARCH
 from .display import ObjectValue
-from .filters import Filter, FilterError, field_to_filter_class
+from .filters import BaseFilter, FilterError, field_to_filter_class
 from .mixins import (
     DisplayFieldMixin,
     FormFieldMixin,
@@ -32,6 +32,10 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
 
     #: The default template name
     default_template_name = "fastview/list.html"
+
+    #: The default fragment template name
+    #: Used for fragment rendering and directly in the container template
+    # fragment_template_name = "fastview/fragments/list.html"
 
     #: The page title, passed to template context for use in page title and headers.
     #: See :meth:`get_title` for more details
@@ -71,7 +75,7 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
     #:      filters = [
     #:          'field_name',  # MyModel.field_name
     #:          CustomFilter(...), # :class:`fastview.views.filters.Filter` subclass
-    filters: Optional[List[Union[str, Filter]]] = None
+    filters: Optional[List[Union[str, BaseFilter]]] = None
 
     #: List of fields to search
     search_fields: Optional[List[str]] = None
@@ -88,7 +92,7 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
         self.request_ordering = {}
         return super().dispatch(request, *args, **kwargs)
 
-    def get_filters(self) -> Dict[str, Filter]:
+    def get_filters(self) -> Dict[str, BaseFilter]:
         """
         Build filter list by looking up field strings and converting to Filter instances
 
@@ -103,12 +107,12 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
                 'param': Filter('param', ...),
             }
         """
-        filters = {}
+        filters: Dict[str, BaseFilter] = {}
         if not self.filters:
             return filters
 
         for filter_obj in self.filters:
-            if not isinstance(filter_obj, Filter):
+            if not isinstance(filter_obj, BaseFilter):
                 # Convert field name into a filter object
                 field_name = filter_obj
                 try:
@@ -245,7 +249,6 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
                 links in the table header
         """
         context = super().get_context_data(**kwargs)
-
         if self.paginate_by:
             page_obj = context["page_obj"]
             if django.VERSION >= (3, 2, 0):

@@ -1,0 +1,17 @@
+.fastview-filter__tree {
+  $detail-indent: 20px;
+  margin: 0;
+  list-style: none;
+
+  li {
+    padding-left: $detail-indent;
+
+    details {
+      margin-left: 0;
+
+      summary {
+        list-style-position: outside;
+      }
+    }
+  }
+}

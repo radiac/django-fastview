@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type
 
 from django.db import models
 from django.template.loader import get_template
@@ -17,29 +17,30 @@ class FilterError(ValueError):
     pass
 
 
-class Filter:
+ChoiceType = Tuple[str, str]
+ChoicesType = List[ChoiceType]
+TreeListType = List[Tuple[ChoiceType, "TreeListType"]]  # type: ignore
+# Recursive typing not current supported by mypy https://github.com/python/mypy/issues/731
+
+
+class BaseFilter:
     """
     Base filter with arbitrary text matching
     """
 
-    view: AbstractFastView = None
-
-    param: str = None
-    field_name: str = None
-    label: str = None
-    choices: Optional[Iterable[Tuple[Any, str]]] = None
-    _choices: Optional[Iterable[Tuple[Any, str]]] = None
-    value: str = ""
+    view: Optional[AbstractFastView] = None
+    param: str
+    field_name: str
+    label: str
     value: str = ""
     template_name: str = "fastview/filters/choices.html"
-    ignore_invalid = False
+    ignore_invalid: bool = False
 
     def __init__(
         self,
         param: str,
-        field_name: str = None,
-        label: str = None,
-        choices: Optional[Iterable[Tuple[Any, str]]] = None,
+        field_name: Optional[str] = None,
+        label: Optional[str] = None,
     ):
         self.param = param
         self.field_name = field_name or param
@@ -49,10 +50,7 @@ class Filter:
         else:
             self.label = param.replace("_", " ").title()
 
-        if choices is not None:
-            self.choices = choices
-
-    def bind(self, value: Any) -> Filter:
+    def bind(self, value: Any) -> BaseFilter:
         """
         Create a copy of this filter and bind it to a submitted value
 
@@ -72,12 +70,9 @@ class Filter:
             "field_name": self.field_name,
         }
 
-        if self.choices is not None:
-            kwargs["choices"] = copy.copy(self.choices)
-
         return kwargs
 
-    def clone(self) -> Filter:
+    def clone(self) -> BaseFilter:
         """
         Make a clean copy of this filter, without a value
         """
@@ -90,14 +85,6 @@ class Filter:
         """
         Clean a value and store it
         """
-        choices = self.get_choices()
-        lookup = dict(choices)
-        if value not in lookup.keys():
-            if self.ignore_invalid:
-                value = ""
-            else:
-                raise FilterError(f"Invalid value for filter {self.label}")
-
         self.value = value
 
     def get_template_name(self):
@@ -116,14 +103,97 @@ class Filter:
         return template.render(context)
 
     def get_context(self) -> Dict["str", Any]:
-        choices_with_urls = self.generate_choices_with_urls()
         context = {
             "filter": self,
-            "choices": choices_with_urls,
         }
         return context
 
-    def get_choices(self):
+    def get_all_choice(self) -> ChoiceType:
+        """
+        Return an "All" option (value, label) tuple
+        """
+        return ("", _("All"))
+
+    @cached_property
+    def model(self):
+        if not self.view:
+            raise FilterError(
+                f"Filter {self.label} initiated incorrectly, view unknown"
+            )
+        if not hasattr(self.view, "model"):
+            raise FilterError(f"View for filter {self.label} has no model")
+        return self.view.model
+
+    @cached_property
+    def model_field(self):
+        try:
+            field = self.model._meta.get_field(self.field_name)
+        except models.FieldDoesNotExist:
+            raise FilterError(
+                f"Named field for filter {self.label} does not match a model field"
+            )
+
+        return field
+
+    def process(self, qs: models.QuerySet) -> models.QuerySet:
+        """
+        Filter the queryset using the bound value
+        """
+        if self.value:
+            qs = qs.filter(**{self.field_name: self.value})
+        return qs
+
+
+class Filter(BaseFilter):
+    """
+    Base filter with arbitrary text matching
+    """
+
+    choices: Optional[ChoicesType] = None
+    _choices: Optional[ChoicesType] = None
+
+    def __init__(
+        self,
+        param: str,
+        field_name: Optional[str] = None,
+        label: Optional[str] = None,
+        choices: Optional[ChoicesType] = None,
+    ):
+        super().__init__(param=param, field_name=field_name, label=label)
+        if choices is not None:
+            self.choices = choices
+
+    def deconstruct(self) -> Dict[str, Any]:
+        """
+        Deconstruct choices
+        """
+        kwargs = super().deconstruct()
+
+        if self.choices is not None:
+            kwargs["choices"] = copy.copy(self.choices)
+
+        return kwargs
+
+    def set_value(self, value: str):
+        """
+        Clean a value and store it
+        """
+        choices = self.get_choices()
+        lookup = dict(choices)
+        if value not in lookup.keys():
+            if self.ignore_invalid:
+                value = ""
+            else:
+                raise FilterError(f"Invalid value for filter {self.label}")
+
+        self.value = value
+
+    def get_context(self) -> Dict["str", Any]:
+        context = super().get_context()
+        context["choices"] = self._generate_choices_with_urls()
+        return context
+
+    def get_choices(self) -> ChoicesType:
         """
         Get choices for use in validation and template rendering
 
@@ -156,31 +226,10 @@ class Filter:
             # Values from this model
             choices = self.get_local_choices()
 
-        self._choices = [("", _("All"))] + choices
+        self._choices = [self.get_all_choice()] + choices
         return self._choices
 
-    @cached_property
-    def model(self):
-        if not self.view:
-            raise FilterError(
-                f"Filter {self.label} initiated incorrectly, view unknown"
-            )
-        if not hasattr(self.view, "model"):
-            raise FilterError(f"View for filter {self.label} has no model")
-        return self.view.model
-
-    @cached_property
-    def model_field(self):
-        try:
-            field = self.model._meta.get_field(self.field_name)
-        except models.FieldDoesNotExist:
-            raise FilterError(
-                f"Named field for filter {self.label} does not match a model field"
-            )
-
-        return field
-
-    def get_local_choices(self):
+    def get_local_choices(self) -> ChoicesType:
         """
         Get choices from the values of the field on this model
         """
@@ -192,7 +241,7 @@ class Filter:
         choices = [(str(val), str(val)) for val in vals]
         return choices
 
-    def get_related_choices(self):
+    def get_related_choices(self) -> ChoicesType:
         """
         Return a queryset of the related model for use by get_choices
         """
@@ -205,7 +254,16 @@ class Filter:
         qs = related_model.objects.all()
         return qs
 
-    def generate_choices_with_urls(self):
+    def _generate_choices_with_urls(self):
+        """
+        Template choice generator
+
+        Called by get_context
+
+        Returns tuples of::
+
+            (value, label, url, selected)
+        """
         if not self.view:
             raise FilterError(f"Filter {self.label} has no view, incorrect usage")
         if not hasattr(self.view, "request"):
@@ -219,8 +277,8 @@ class Filter:
 
         for value, label in choices:
             if not value:
-                # Delete from params. Use pop intead of del as we'll also cover the case
-                # where no param has been passed
+                # Delete from params. Use pop instead of del as we'll also cover the
+                # case where no param has been passed
                 params.pop(self.param, None)
             else:
                 params[self.param] = value
@@ -228,14 +286,6 @@ class Filter:
             selected = value == self.value
 
             yield (value, label, f"{base_url}?{params.urlencode()}", selected)
-
-    def process(self, qs: models.QuerySet) -> models.QuerySet:
-        """
-        Filter the queryset using the bound value
-        """
-        if self.value:
-            qs = qs.filter(**{self.field_name: self.value})
-        return qs
 
 
 def str_to_date_tuple(value: str) -> Tuple[Optional[int], Optional[int]]:
@@ -250,9 +300,10 @@ def str_to_date_tuple(value: str) -> Tuple[Optional[int], Optional[int]]:
         return None, None
 
     parts = value.split("-")
-    year = parts[0]
+    year_raw: str = parts[0]
+    year: Optional[int]
     try:
-        year = int(year)
+        year = int(year_raw)
     except ValueError:
         year = None
 
@@ -260,11 +311,11 @@ def str_to_date_tuple(value: str) -> Tuple[Optional[int], Optional[int]]:
     if year is None or year < 1000 or year > 3000:
         raise FilterError("Invalid date")
 
-    month = None
+    month: Optional[int] = None
     if len(parts) > 1:
-        month = parts[1]
+        month_raw: str = parts[1]
         try:
-            month = int(month)
+            month = int(month_raw)
         except ValueError:
             month = None
 
@@ -285,8 +336,8 @@ class DateHierarchyFilter(Filter):
     ``filter.year`` and ``filter.month`` are ``None`` or the integer values
     """
 
-    year: int = None
-    month: int = None
+    year: Optional[int] = None
+    month: Optional[int] = None
 
     template_name = "fastview/filters/date_hierarchy.html"
 
@@ -327,7 +378,7 @@ class DateHierarchyFilter(Filter):
         qs = self.model.objects.filter(**{f"{self.field_name}__year": self.year})
         # qs.dates() or qs.datetimes()
         dates = getattr(qs, date_method)(self.field_name, "month")
-        choices = [
+        choices: ChoicesType = [
             ("", _("All")),
         ]
         choices += [
@@ -376,7 +427,7 @@ class BooleanFilter(Filter):
     """
 
     boolean: Optional[bool]
-    choices = (("", _("All")), ("1", _("Yes")), ("0", _("No")))
+    choices = [("", _("All")), ("1", _("Yes")), ("0", _("No"))]
 
     def set_value(self, value: str):
         """
@@ -399,6 +450,136 @@ class BooleanFilter(Filter):
         return qs.filter(**{self.field_name: self.boolean})
 
 
+class TreeFilter(Filter):
+    """
+    Tree filter
+
+    Operates on a list of (parent, [child, child, ...]) tuples, where each child is a
+    similar tuple. Each parent and child object should be a tuple of (value, label)
+
+    For example::
+
+        [
+        ((value, label), [
+            ((child_value, label), []), ((child_value, label), [...]),
+        ]), ((value, label), []),
+    ]
+    """
+
+    tree: Optional[TreeListType] = None
+    template_name: str = "fastview/filters/tree.html"
+
+    def __init__(
+        self,
+        param: str,
+        field_name: Optional[str] = None,
+        label: Optional[str] = None,
+        tree: Optional[TreeListType] = None,
+    ):
+        """
+        Take a tree object rather than choices
+        """
+        super().__init__(
+            param=param,
+            field_name=field_name,
+            label=label,
+        )
+        self.tree = tree
+
+    def get_context(self) -> Dict["str", Any]:
+        context: Dict["str", Any] = super().get_context()
+        context["choices"] = self._generate_choices_with_urls()
+        context["level"] = 1
+        return context
+
+    def get_tree(self) -> TreeListType:
+        if self.tree is None:
+            raise ValueError(f"Filter {self.label} has no tree")
+        return [(self.get_all_choice(), [])] + self.tree
+
+    def set_value(self, value: str):
+        """
+        Clean a value and store it
+        """
+        tree: TreeListType = self.get_tree()
+
+        # Check tree for valid value
+        stack = tree[:]
+        is_valid: bool = False
+        choice: ChoiceType
+        children: TreeListType
+        while stack:
+            choice, children = stack.pop(0)
+            choice_value, _ = self._choice_to_value_label(choice)
+            if choice_value == value:
+                is_valid = True
+                break
+
+            stack = children + stack
+
+        if not is_valid:
+            if self.ignore_invalid:
+                value = ""
+            else:
+                raise FilterError(f"Invalid value for filter {self.label}")
+
+        self.value = value
+
+    def _choice_to_value_label(self, choice) -> Tuple[str, str]:
+        return choice
+
+    def _generate_choices_with_urls(self):
+        """
+        Template choice generator
+
+        Called by get_context
+
+        Returns tuples of::
+
+            (value, label, url, selected, child_selected, children)
+
+        Where children is None, or another generator of the same tuples
+        """
+        if not self.view:
+            raise FilterError(f"Filter {self.label} has no view, incorrect usage")
+        if not hasattr(self.view, "request"):
+            raise FilterError(f"Filter {self.label} view has no request")
+
+        tree: TreeListType = self.get_tree()
+
+        request = self.view.request
+        base_url = request.path
+        params = request.GET.copy()
+
+        def generate_for_nodelist(nodes):
+            choice: ChoiceType
+            children: TreeListType
+
+            for choice, children in nodes:
+                value, label = self._choice_to_value_label(choice)
+
+                if not value:
+                    # Delete from params. Use pop instead of del as we'll also cover the
+                    # case where no param has been passed
+                    params.pop(self.param, None)
+                else:
+                    params[self.param] = value
+
+                selected = self.value == value
+                child_selected = self.value.startswith(f"{value}/")
+
+                yield (
+                    value,
+                    label,
+                    f"{base_url}?{params.urlencode()}",
+                    selected,
+                    child_selected,
+                    generate_for_nodelist(children) if children else None,
+                )
+
+        yield from generate_for_nodelist(tree)
+
+
 field_lookup = {
     models.DateField: DateHierarchyFilter,
     models.DateTimeField: DateHierarchyFilter,
@@ -406,7 +587,7 @@ field_lookup = {
 }
 
 
-def field_to_filter_class(field: models.Field) -> Filter:
+def field_to_filter_class(field: models.Field) -> Type[Filter]:
     """
     Return the most appropriate filter for the given a model field
     """
