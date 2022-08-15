@@ -71,21 +71,6 @@ the supported variants::
 These will also generate a ``coverage`` HTML report.
 
 
-.. _roadmap:
-
-Roadmap
-=======
-
-In no particular order:
-
-* Address TODO notes in code
-* Annotated object enhancements with better integration in the template context
-* List view: support for ordering, searching, filtering and actions
-* List and detail view: improved support for different field types
-* Create and update views: improved support for relations, support for inline formsets
-* Delete view: support for listing cascaded deletes
-
-
 Credits
 =======
 

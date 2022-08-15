@@ -1,1 +1,1 @@
-from .base import ModelViewGroup, ViewGroup
+from .base import ModelViewGroup, ViewGroup  # noqa

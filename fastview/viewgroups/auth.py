@@ -1,6 +1,5 @@
 from typing import Any, Dict, List
 
-from django.contrib.auth import views
 from django.contrib.auth.urls import urlpatterns as auth_urlpatterns
 from django.urls import path
 from django.urls.resolvers import URLPattern

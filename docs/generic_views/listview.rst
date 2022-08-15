@@ -22,7 +22,14 @@ The ``ListView`` follows Fastview's standard :ref:`template lookup rules <templa
 Display fields
 ==============
 
+The ``fields`` attribute can take a list of model attribute names::
 
+    class BlogList(ListView):
+        fields = ["name", "is_published"]
+
+These are converted into display objects; to customise how a field is shown, or to add a
+custom field which isn't a model attribute, you can create your own ``DisplayValue``
+class and pass that in as an object in the list. See :doc:`display` for full details.
 
 
 Filters
