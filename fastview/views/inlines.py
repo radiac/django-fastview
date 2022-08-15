@@ -76,6 +76,9 @@ class Inline(FormFieldMixin):
             can_delete=self.can_delete,
         )
 
-    def get_initial(self, view: InlineMixin) -> Dict[str, Any]:
+    def get_initial(self) -> Dict[str, Any]:
         # TODO
         return {}
+
+    def get_initial_from_view(self, view: InlineMixin) -> Dict[str, Any]:
+        return self.get_initial()

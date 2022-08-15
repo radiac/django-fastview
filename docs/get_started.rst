@@ -17,6 +17,11 @@ Add to ``INSTALLED_APPS``::
         "fastview",
     ]
 
+You will also need the ``request`` `context processor`__ in your ``TEMPLATES`` - this
+should already be in the default settings for a new project.
+
+__ https://docs.djangoproject.com/en/dev/ref/templates/api/#django-template-context-processors-request
+
 Optional: add the default Fastview JavaScript and CSS to your templates::
 
     <head>

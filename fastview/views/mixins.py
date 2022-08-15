@@ -3,7 +3,6 @@ Mixins for fastviews
 """
 from __future__ import annotations
 
-from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Type, Union, cast
 
 from django.contrib.auth.mixins import UserPassesTestMixin
@@ -130,8 +129,13 @@ class FastViewMixin(AbstractFastView):
     # Track whether this is being called as a fragment
     _as_fragment: bool = False
 
-    # Base template name for view templates to extend
+    #: Base template name for view templates to extend
+    #: If not set, will be inherited from the ViewGroup
+    #: If not set and not part of a ViewGroup, will use ``default_base_template_name``
     base_template_name: Optional[str] = None
+
+    #: Default base template name for templates, when no ``base_template_name`` is found
+    default_base_template_name: str = "fastview/base.html"
 
     # Template name when rendering a fragment
     fragment_template_name: Optional[str] = None
@@ -178,7 +182,9 @@ class FastViewMixin(AbstractFastView):
 
         # Make the title available
         context["title"] = self.get_title()
-        context["base_template_name"] = self.base_template_name
+        context["base_template_name"] = (
+            self.base_template_name or self.default_base_template_name
+        )
 
         # Let the viewgroup extend the context
         if self.viewgroup:
@@ -417,7 +423,7 @@ class InlineMixin:
     def get_formset_kwargs(self, inline: Inline, **extra_kwargs):
         kwargs = self.get_form_kwargs()
         kwargs.update(extra_kwargs)
-        kwargs["initial"] = inline.get_initial(self)
+        kwargs["initial"] = inline.get_initial_from_view(view=self)
         return kwargs
 
 
@@ -431,8 +437,8 @@ class DisplayFieldMixin(BaseFieldMixin):
     fields: List[Union[str, DisplayValue]]
 
     # Caches
-    _displayvalues: List[DisplayValue] = None
-    _displayvalue_lookup: Dict[str, DisplayValue] = None
+    _displayvalues: Optional[List[DisplayValue]] = None
+    _displayvalue_lookup: Optional[Dict[str, DisplayValue]] = None
 
     def resolve_displayvalue_slug(self, slug):
         """

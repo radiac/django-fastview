@@ -5,7 +5,6 @@ from django.http import QueryDict
 from django.template import TemplateSyntaxError
 from django.template.base import token_kwargs
 from django.template.response import SimpleTemplateResponse
-from django.test import RequestFactory
 from django.urls import resolve, reverse
 from django.utils.safestring import mark_safe
 

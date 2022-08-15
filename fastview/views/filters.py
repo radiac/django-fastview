@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type
 
 from django.db import models
 from django.template.loader import get_template
@@ -18,8 +18,9 @@ class FilterError(ValueError):
 
 
 ChoiceType = Tuple[str, str]
-ChoicesType = Iterable[ChoiceType]
-TreeListType = List[Tuple[ChoiceType, "TreeListType"]]
+ChoicesType = List[ChoiceType]
+TreeListType = List[Tuple[ChoiceType, "TreeListType"]]  # type: ignore
+# Recursive typing not current supported by mypy https://github.com/python/mypy/issues/731
 
 
 class BaseFilter:
@@ -27,19 +28,19 @@ class BaseFilter:
     Base filter with arbitrary text matching
     """
 
-    view: AbstractFastView = None
-    param: str = None
-    field_name: str = None
-    label: str = None
+    view: Optional[AbstractFastView] = None
+    param: str
+    field_name: str
+    label: str
     value: str = ""
     template_name: str = "fastview/filters/choices.html"
-    ignore_invalid = False
+    ignore_invalid: bool = False
 
     def __init__(
         self,
         param: str,
-        field_name: str = None,
-        label: str = None,
+        field_name: Optional[str] = None,
+        label: Optional[str] = None,
     ):
         self.param = param
         self.field_name = field_name or param
@@ -68,9 +69,6 @@ class BaseFilter:
             "label": self.label,
             "field_name": self.field_name,
         }
-
-        if self.choices is not None:
-            kwargs["choices"] = copy.copy(self.choices)
 
         return kwargs
 
@@ -137,6 +135,14 @@ class BaseFilter:
 
         return field
 
+    def process(self, qs: models.QuerySet) -> models.QuerySet:
+        """
+        Filter the queryset using the bound value
+        """
+        if self.value:
+            qs = qs.filter(**{self.field_name: self.value})
+        return qs
+
 
 class Filter(BaseFilter):
     """
@@ -149,13 +155,24 @@ class Filter(BaseFilter):
     def __init__(
         self,
         param: str,
-        field_name: str = None,
-        label: str = None,
+        field_name: Optional[str] = None,
+        label: Optional[str] = None,
         choices: Optional[ChoicesType] = None,
     ):
         super().__init__(param=param, field_name=field_name, label=label)
         if choices is not None:
             self.choices = choices
+
+    def deconstruct(self) -> Dict[str, Any]:
+        """
+        Deconstruct choices
+        """
+        kwargs = super().deconstruct()
+
+        if self.choices is not None:
+            kwargs["choices"] = copy.copy(self.choices)
+
+        return kwargs
 
     def set_value(self, value: str):
         """
@@ -212,7 +229,7 @@ class Filter(BaseFilter):
         self._choices = [self.get_all_choice()] + choices
         return self._choices
 
-    def get_local_choices(self):
+    def get_local_choices(self) -> ChoicesType:
         """
         Get choices from the values of the field on this model
         """
@@ -270,14 +287,6 @@ class Filter(BaseFilter):
 
             yield (value, label, f"{base_url}?{params.urlencode()}", selected)
 
-    def process(self, qs: models.QuerySet) -> models.QuerySet:
-        """
-        Filter the queryset using the bound value
-        """
-        if self.value:
-            qs = qs.filter(**{self.field_name: self.value})
-        return qs
-
 
 def str_to_date_tuple(value: str) -> Tuple[Optional[int], Optional[int]]:
     """
@@ -291,9 +300,10 @@ def str_to_date_tuple(value: str) -> Tuple[Optional[int], Optional[int]]:
         return None, None
 
     parts = value.split("-")
-    year = parts[0]
+    year_raw: str = parts[0]
+    year: Optional[int]
     try:
-        year = int(year)
+        year = int(year_raw)
     except ValueError:
         year = None
 
@@ -301,11 +311,11 @@ def str_to_date_tuple(value: str) -> Tuple[Optional[int], Optional[int]]:
     if year is None or year < 1000 or year > 3000:
         raise FilterError("Invalid date")
 
-    month = None
+    month: Optional[int] = None
     if len(parts) > 1:
-        month = parts[1]
+        month_raw: str = parts[1]
         try:
-            month = int(month)
+            month = int(month_raw)
         except ValueError:
             month = None
 
@@ -417,7 +427,7 @@ class BooleanFilter(Filter):
     """
 
     boolean: Optional[bool]
-    choices = (("", _("All")), ("1", _("Yes")), ("0", _("No")))
+    choices = [("", _("All")), ("1", _("Yes")), ("0", _("No"))]
 
     def set_value(self, value: str):
         """
@@ -462,9 +472,9 @@ class TreeFilter(Filter):
     def __init__(
         self,
         param: str,
-        field_name: str = None,
-        label: str = None,
-        tree: TreeListType = None,
+        field_name: Optional[str] = None,
+        label: Optional[str] = None,
+        tree: Optional[TreeListType] = None,
     ):
         """
         Take a tree object rather than choices
@@ -485,7 +495,7 @@ class TreeFilter(Filter):
     def get_tree(self) -> TreeListType:
         if self.tree is None:
             raise ValueError(f"Filter {self.label} has no tree")
-        return [self.get_all_choice()] + self.tree
+        return [(self.get_all_choice(), [])] + self.tree
 
     def set_value(self, value: str):
         """
@@ -577,7 +587,7 @@ field_lookup = {
 }
 
 
-def field_to_filter_class(field: models.Field) -> Filter:
+def field_to_filter_class(field: models.Field) -> Type[Filter]:
     """
     Return the most appropriate filter for the given a model field
     """

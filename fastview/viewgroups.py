@@ -73,7 +73,7 @@ class ViewGroup(metaclass=ViewGroupType):
     permission: Optional[Permission]
 
     # All groups must define an index view
-    index_view: AbstractFastView
+    index_view: Type[AbstractFastView]
 
     views: Dict[str, AbstractFastView]
 
@@ -189,7 +189,7 @@ class ViewGroup(metaclass=ViewGroupType):
         """
         Build the URL pattern match for the given view name and view.
 
-        Called internally by `get_url_for_view()` has checked for `get_<name>_url()`.
+        Called internally by `get_url_pattern_for_view()` has checked for `get_<name>_url()`.
         """
         if name == INDEX_VIEW:
             route = ""
@@ -286,11 +286,11 @@ class ModelViewGroup(ViewGroup):
     owner_field_name = None
     action_links = ["index", "create", "update", "delete"]
 
-    index_view: AbstractFastView = ListView
-    detail_view: AbstractFastView = DetailView
-    create_view: Optional[AbstractFastView] = CreateView
-    update_view: Optional[AbstractFastView] = UpdateView
-    delete_view: Optional[AbstractFastView] = DeleteView
+    index_view: Type[AbstractFastView] = ListView
+    detail_view: Type[AbstractFastView] = DetailView
+    create_view: Optional[Type[AbstractFastView]] = CreateView
+    update_view: Optional[Type[AbstractFastView]] = UpdateView
+    delete_view: Optional[Type[AbstractFastView]] = DeleteView
 
     def _get_view_attrs(self, name: str, view: View) -> Dict[str, Any]:
         """
