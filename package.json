@@ -2,7 +2,7 @@
   "name": "django_fastview",
   "version": "0.1.0",
   "description": "JavaScript resources for Django Fastview",
-  "homepage": "http://radiac.net/projects/django-fastview/",
+  "homepage": "https://radiac.net/projects/django-fastview/",
   "repository": {
     "type": "git",
     "url": "https://github.com/radiac/django-fastview.git"
