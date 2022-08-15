@@ -24,13 +24,15 @@ django==4.1
     # via -r requirements.in
 filelock==3.8.0
     # via pytest-mypy
-flake8==5.0.4
-    # via pytest-flake8
+flake8==4.0.1
+    # via
+    #   -r requirements.in
+    #   pytest-flake8
 iniconfig==1.1.1
     # via pytest
 isort==5.10.1
     # via pytest-isort
-mccabe==0.7.0
+mccabe==0.6.1
     # via flake8
 mypy==0.971
     # via pytest-mypy
@@ -54,9 +56,9 @@ pluggy==1.0.0
     # via pytest
 py==1.11.0
     # via pytest
-pycodestyle==2.9.1
+pycodestyle==2.8.0
     # via flake8
-pyflakes==2.5.0
+pyflakes==2.4.0
     # via flake8
 pyparsing==3.0.9
     # via packaging
