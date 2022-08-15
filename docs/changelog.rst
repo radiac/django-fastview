@@ -10,14 +10,16 @@ are available by installing the master branch from github (see
 :ref:`installation_instructions` for details).
 
 
-0.1.0, 2022-
+0.1.0, 2022-08-15
 -----------------
 
 Feature:
 
-* Support for list view filtering and ordering
+* Support for list view filtering, ordering and searching
 * Ability to embed fastviews as fragments in other pages
 * Support for list view pagination with standard ``paginate_by`` attribute
+* Added ``AuthViewGroup`` for convenient Django auth views
+* Improved template defaults and customisation options
 
 Changes:
 
