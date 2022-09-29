@@ -10,6 +10,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import AutoField
 from django.forms.models import ModelForm, modelform_factory
+from django.http import Http404
 from django.utils.translation import gettext as _
 from django.views.generic.edit import ModelFormMixin
 
@@ -295,7 +296,13 @@ class ObjectFastViewMixin(ModelFastViewMixin):
         # check for ``self.object``, or patch Django to do the same - see Django #18849
         instance = None
         if self.has_id_slug:
-            instance = self.get_object()
+            # As this is before ``self.get()`` we don't want to bubble the potential Http404 just yet
+            # as this will stop UserPassesTestMixin doing it's thing and redirecting to LOGIN_URL
+            # if it is a 404 return False as the check is moot.
+            try:
+                instance = self.get_object()
+            except Http404:
+                return False
         return permission.check(self.request, self.model, instance)
 
     def get_title_kwargs(self, **kwargs):
