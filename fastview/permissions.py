@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Optional, Type
 
-from django.db.models import ManyToManyField, Model, Q, QuerySet
+from django.db.models import ForeignKey, ManyToManyField, Model, Q, QuerySet
 from django.http import HttpRequest
 
 
@@ -312,8 +312,14 @@ class Owner(Permission):
         model: Optional[Type[Model]] = None,
         instance: Optional[Model] = None,
     ) -> bool:
-        if not instance or not request.user.is_authenticated:
+        if not instance or not request.user.is_authenticated or not model:
             return False
+
+        # TODO this will be expensive for list views - prefetch?
+        qs = self.filter(request, model.objects)
+        return qs.filter(pk=instance.pk).exists()
+
+        # TODO: remove legacy code
 
         # Simple lookup is quicker if possible
         if "__" not in self.owner_field:
@@ -326,12 +332,11 @@ class Owner(Permission):
         rel_field_name, rel_target = self.owner_field.split("__", 1)
         rel_field = type(instance)._meta.get_field(rel_field_name)
 
-        # TODO this will be expensive for list views - prefetch?
         if isinstance(rel_field, ManyToManyField):
             rel_qs = getattr(instance, rel_field_name)
             return rel_qs.filter(**{f"{rel_target}_id": request.user.pk}).exists()
 
-        # TODO Support 1:1, 1:m, m:1
+        # TODO Support OneToOneField and reverse ForeignKey
         raise NotImplementedError("Fastview doesn't support this relationship yet")
 
     def filter_q(self, request: HttpRequest, queryset: QuerySet) -> Q:
