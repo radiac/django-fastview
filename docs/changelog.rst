@@ -10,6 +10,22 @@ are available by installing the master branch from github (see
 :ref:`installation_instructions` for details).
 
 
+0.1.1, TBC
+----------
+
+Feature:
+
+* Owner.check supports complex relationships
+
+Bugfix:
+
+* Catch ObjectFastViewMixin returning a 404 when not logged in (#40)
+
+Thanks to:
+
+* jamesoutterside for #40
+
+
 0.1.0, 2022-08-15
 -----------------
 
