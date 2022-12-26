@@ -88,17 +88,10 @@ sqlparse==0.4.2
 toml==0.10.2
     # via pytest-black
 tomli==2.0.1
-    # via
-    #   black
-    #   build
-    #   coverage
-    #   mypy
-    #   pytest
+    # via pytest
 typing-extensions==4.3.0
-    # via
-    #   black
-    #   mypy
-wheel==0.37.1
+    # via mypy
+wheel==0.38.1
     # via pip-tools
 
 # The following packages are considered to be unsafe in a requirements file:
