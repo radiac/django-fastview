@@ -5,7 +5,7 @@
     {% if selected %}
       <li>{{ label }}</li>
     {% else %}
-      <li><a href="{{ url }}"">{{ label }}</a></li>
+      <li><a href="{{ url }}" hx-boost="true" hx-swap="outerHTML" hx-target="closest .fastview-list">{{ label }}</a></li>
     {% endif %}
 
     {% if year and forloop.first %}

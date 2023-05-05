@@ -86,7 +86,10 @@ class AnnotatedObject:
             """
             Return the field values
             """
-            return [field.get_value(self.object) for field in self.view.get_fields()]
+            return [
+                field.get_value(self.view, self.object)
+                for field in self.view.get_fields()
+            ]
 
         def items(self):
             """

@@ -25,3 +25,23 @@ Fastview provides the following ``DisplayValue`` types:
 Create a custom display value by subclassing one of those or the base ``DisplayValue``
 class.
 
+
+
+API reference
+=============
+
+.. autoclass:: fastview.views.display.DisplayValue
+	:members:
+	:show-inheritance:
+
+.. autoclass:: fastview.views.display.AttributeValue
+	:members:
+	:show-inheritance:
+
+.. autoclass:: fastview.views.display.ObjectValue
+	:members:
+	:show-inheritance:
+
+.. autoclass:: fastview.contrib.tagulous.TagulousLinksValue
+	:members:
+	:show-inheritance:

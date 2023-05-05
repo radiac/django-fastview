@@ -48,6 +48,8 @@ release = "0.1.0"
 extensions = [
     "sphinx_radiac_theme",
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",
     "sphinx_gitref",
 ]
 

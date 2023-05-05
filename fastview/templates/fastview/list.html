@@ -1,12 +1,5 @@
 {% extends base_template_name %}
 
 {% block fastview_content %}
-
-<div class="fastview-list">
-  {% if filters %}
-    {% include "fastview/includes/list/filter.html" %}
-  {% endif %}
-  {% include view.get_fragment_template_names %}
-</div>
-
+{% include view.get_fragment_template_names %}
 {% endblock %}

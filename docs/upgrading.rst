@@ -22,6 +22,39 @@ Instructions
    the latest version
 
 
+.. _upgrade_0.1.0:
+
+Upgrading from 0.1.0
+====================
+
+Template fragments
+------------------
+
+Any elements in the full page templates ``fastview/<action>.html`` have been moved into
+their fragments; they now just wrap ``fragments/<action>.html`` with a base template.
+
+The included template components in ``includes/<action>/`` have been moved into
+``fragments/<action>/``.
+
+Fragment templates have been broken into additional components in ``fragments/action/``
+for ease of customisation.
+
+If you were overriding a section of a fragment template in ``fragments/``, or an include
+in ``includes/``, you will want to move those changes into the appropriate files in
+``fragments/<action>/``
+
+For example, for ``fragments/list.html``:
+
+* the filter was in ``includes/list/filter.html``; it is now in
+  ``fragments/list/filter.html``
+* the data table was in ``fragments/list.html``; it is now in ``fragments/list/data.html``
+
+There is now a ``{% fragment_component <component> %}`` template tag which honours
+template searching logic - eg anywhere it will look for ``fragments/template.html``, it
+will look for components in ``fragments/template/``.
+
+
+
 .. _upgrade_0-0-3:
 
 Upgrading from 0.0.3

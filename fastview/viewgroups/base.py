@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from inspect import isclass
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
 
 from django.core.exceptions import FieldDoesNotExist
 from django.urls import include, path, reverse
@@ -13,7 +13,8 @@ from ..constants import INDEX_VIEW, OBJECT_VIEW, VIEW_SUFFIX
 from ..permissions import Permission
 from ..views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from ..views.mixins import AbstractFastView
-
+from ..views.filters import BaseFilter
+from ..views.display import DisplayValue
 
 if TYPE_CHECKING:
     from django.db.models.base import ModelBase
@@ -73,11 +74,23 @@ class ViewGroup(metaclass=ViewGroupType):
     permission: Optional[Permission]
 
     # All groups must define an index view
-    index_view: Type[AbstractFastView]
+    index_view: Type[AbstractFastView] | dict[str, Any]
 
     views: Dict[str, AbstractFastView]
 
     action_links: Optional[List[str]] = None
+
+    #: Default ``fields`` for all actions with a ``fields`` attribute
+    fields: Optional[List[Union[str, DisplayValue]]] = None
+
+    #: Default ``exclude`` for all actions with a ``exclude`` attribute
+    exclude: Optional[List[Any]] = None
+
+    #: Default ``filters`` for all ListView actions
+    filters: Optional[List[Union[str, BaseFilter]]] = None
+
+    #: Default ``search_fields`` for all ListView actions
+    search_fields: Optional[List[str]] = None
 
     def __init__(self, **kwargs):
         """
@@ -200,12 +213,14 @@ class ViewGroup(metaclass=ViewGroupType):
         return route
 
     def get_action_links(self):
+        # TODO: Detect additional view actions
         return self.action_links
 
     def get_context_data(self, view: View, **context: Any) -> Dict[str, Any]:
         """
         Get additional context data for the view
         """
+
         # Build using delayed closures, avoid unnecessary potentially expensive lookups
         # TODO: Is this really worth the complexity? Candidate for simplification.
         def can_factory(to_view):
@@ -288,11 +303,12 @@ class ModelViewGroup(ViewGroup):
     owner_field_name = None
     action_links = ["index", "create", "update", "delete"]
 
-    index_view: Type[AbstractFastView] = ListView
-    detail_view: Type[AbstractFastView] = DetailView
-    create_view: Optional[Type[AbstractFastView]] = CreateView
-    update_view: Optional[Type[AbstractFastView]] = UpdateView
-    delete_view: Optional[Type[AbstractFastView]] = DeleteView
+    # Default CRUD views
+    index_view: Type[AbstractFastView] | dict[str, Any] = ListView
+    detail_view: Type[AbstractFastView] | dict[str, Any] = DetailView
+    create_view: Optional[Type[AbstractFastView] | dict[str, Any]] = CreateView
+    update_view: Optional[Type[AbstractFastView] | dict[str, Any]] = UpdateView
+    delete_view: Optional[Type[AbstractFastView] | dict[str, Any]] = DeleteView
 
     def _get_view_attrs(self, name: str, view: View) -> Dict[str, Any]:
         """

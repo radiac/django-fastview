@@ -3,10 +3,11 @@ URL management
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 from urllib.parse import urlencode
 
 from django.core.exceptions import ImproperlyConfigured
+from django.http import QueryDict
 from django.urls import reverse
 
 
@@ -70,7 +71,9 @@ def viewgroup_reverse(
             Start the ``viewname`` with a colon to refer to views in the ``view``'s
             viewgroup, eg::
 
-                self.reverse(":index") self.reverse(":detail") self.reverse(":update")
+                viewgroup_reverse(":index", view=self)
+                viewgroup_reverse(":detail", view=self)
+                viewgroup_reverse(":update", view=self)
 
             If a viewgroup view operates on an object (subclasses ObjectFastViewMixin),
             the ``view.object`` will be used for path resolution.
@@ -85,9 +88,46 @@ def viewgroup_reverse(
 
         *args: Standard arguments for reverse()
         **kwargs: Standard keyword arguments for reverse()
+
+    Returns:
+        str: URL to the view
     """
     url = _reverse(viewname, view, *args, **kwargs)
     if params:
         encoded_params = urlencode(params)
         url = f"{url}?{encoded_params}"
     return url
+
+
+def urlparams(params: QueryDict | None, **kwargs: Any) -> str:
+    """
+    Update the params in ``params`` with the new values in ``kwargs`` and return an
+    URL-encoded string, preserving other params.
+
+    Available in a template with {% load fastview %}{% urlparams .. %}
+
+    Args:
+
+        params (QueryDict): The existing parameters. Usually ``request.GET``.
+        **kwargs (dict): New parameters to add to ``params``.
+            Pass a ``None`` value to remove an existing param if it exists
+
+    Returns:
+        str: An url-encoded string ready to append to a URL
+    """
+    # Shallow copy so we don't have side effects
+    if isinstance(params, QueryDict):
+        params = params.copy()
+    elif params is None:
+        params = QueryDict().copy()
+
+    # Can't call params.update() - a QueryDict appends to existing, doesn't overwrite
+    for key, value in kwargs.items():
+        if value is None:
+            if value in params:
+                del params[key]
+        else:
+            params[key] = value
+
+    querystring = params.urlencode()
+    return querystring

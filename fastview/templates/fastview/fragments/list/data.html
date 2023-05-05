@@ -1,0 +1,43 @@
+{% load fastview i18n %}
+
+<table class="fastview-list-table">
+  <thead>
+    <tr>
+      {% for label, current_order, param_value in label_orders %}
+        <th>
+          <a
+            href="{{ request.path }}?{% urlparams o=param_value page=None %}"
+            hx-boost="true"
+            hx-swap="outerHTML"
+            hx-target="closest .fastview-list"
+          >{{ label }}{% if current_order == "" %} &#8593;{% elif current_order == '-' %} &#8595;{% endif %}</a>
+        </th>
+      {% endfor %}
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for object in annotated_object_list %}
+    <tr>
+      {% for value in object.values %}
+        {% if forloop.first %}
+          <td>
+            {% if object.can_detail %}
+              <a href="{{ object.get_detail_url }}">{{ value }}</a>
+            {% else %}
+              {{ value }}
+            {% endif %}
+          </td>
+        {% else %}
+          <td>{{ value }}</td>
+        {% endif %}
+      {% endfor %}
+      <td>
+        {% for label, url in object.action_links %}
+          <a href="{{ url }}">{{ label }}</a>
+        {% endfor %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

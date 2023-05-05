@@ -1,67 +1,19 @@
 {% load fastview i18n %}
-<div class="fastview-list-data">
+<div class="fastview-list">
+  {% if filters %}
+    {% fragment_component "filter.html" %}
+  {% endif %}
 
-{% block actions_container %}
-<div class="fastview-list-control">
-  <ul class="fastview-actions">
-    {% block actions %}
-      {% for label, url in action_links %}
-        <li><a href="{{ url }}">{{ label }}</a></li>
-      {% endfor %}
+  <div class="fastview-list-data">
+    {% fragment_component "actions.html" %}
+    {% fragment_component "data.html" %}
+
+    {% block pagination %}
+      {% if page_obj %}
+        {% fragment_component "pagination.html" %}
+      {% endif %}
     {% endblock %}
-  </ul>
-  {% if view.search_fields %}
-    <div class="fastview-search">
-      <form action="." method="GET">
-        <input type="text" name="q" placeholder="{% trans "Search" %}" value="{{ request.GET.q }}">
-        <button type="submit">{% trans "Search" %}</button>
-        {% for param, value in request.GET.items %}
-          {% if param != PARAM_SEARCH %}
-            <input type="hidden" name="{{ param }}" value="{{ value }}">
-          {% endif %}
-        {% endfor %}
-      </form>
-    </div>
-  {% endif %}
-</div>
-{% endblock %}
 
-{% block table_container %}
-<table class="fastview-list-table">
-  <thead>
-    <tr>
-      {% for label, current_order, param_value in label_orders %}
-        <th><a href="?{% urlparams o=param_value %}">{{ label }}{% if current_order == "" %} &#8593;{% elif current_order == '-' %}
-&#8595{% endif %}</a></th>
-      {% endfor %}
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for object in annotated_object_list %}
-    <tr>
-      {% for value in object.values %}
-        {% if forloop.first %}
-          <td>{% if object.can_detail %}<a href="{{ object.get_detail_url }}">{{ value }}</a>{% else %}{{ value }}{% endif %}</td>
-        {% else %}
-          <td>{{ value }}</td>
-        {% endif %}
-      {% endfor %}
-      <td>
-        {% for label, url in object.action_links %}
-          <a href="{{ url }}">{{ label }}</a>
-        {% endfor %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% endblock %}
-
-{% block pagination %}
-  {% if page_obj %}
-    {% include "fastview/includes/list/pagination.html" %}
-  {% endif %}
-{% endblock %}
+  </div>
 
 </div>

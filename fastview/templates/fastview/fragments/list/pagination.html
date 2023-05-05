@@ -1,0 +1,100 @@
+{% load fastview %}
+
+<div class="fastview-pagination">
+{% spaceless %}
+
+  <ul>
+  {% if page_range %}
+
+    {% if page_obj.has_previous %}
+      <li>
+        <a
+          href="{{ request.path }}?{% urlparams page=page_obj.previous_page_number %}"
+          hx-boost="true"
+          hx-swap="outerHTML"
+          hx-target="closest .fastview-list"
+        >&laquo;</a>
+      </li>
+    {% else %}
+      <li><span>&laquo;</span></li>
+    {% endif %}
+
+    {% for i in page_range %}
+      {% if page_obj.number == i %}
+        <li><span class="current">{{ i }}</span></li>
+      {% else %}
+        {% if i == page_obj.paginator.ELLIPSIS %}
+          <li><span>{{ i }}</span></li>
+        {% else %}
+          <li>
+            <a
+              href="{{ request.path }}?{% urlparams page=i %}"
+              hx-boost="true"
+              hx-swap="outerHTML"
+              hx-target="closest .fastview-list"
+            >{{ i }}</a></li>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <li>
+        <a
+          href="{{ request.path }}?{% urlparams page=page_obj.next_page_number %}"
+          hx-boost="true"
+          hx-swap="outerHTML"
+          hx-target="closest .fastview-list"
+        >&raquo;</a>
+      </li>
+    {% else %}
+      <li><span>&raquo;</span></li>
+    {% endif %}
+
+  {% else %}
+    {# django.VERSION < (3, 2, 0) #}
+
+    {% if page_obj.has_previous %}
+      <li>
+        <a
+          href="{{ request.path }}?{% urlparams page="1" %}"
+          hx-boost="true"
+          hx-swap="outerHTML"
+          hx-target="closest .fastview-list"
+        >&laquo; First</a>
+      </li>
+      <li>
+        <a
+          href="{{ request.path }}?{% urlparams page=page_obj.previous_page_number %}"
+          hx-boost="true"
+          hx-swap="outerHTML"
+          hx-target="closest .fastview-list"
+        >Previous</a>
+      </li>
+    {% endif %}
+
+    <li><span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+
+    {% if page_obj.has_next %}
+      <li>
+        <a
+          href="{{ request.path }}?{% urlparams page=page_obj.next_page_number %}"
+          hx-boost="true"
+          hx-swap="outerHTML"
+          hx-target="closest .fastview-list"
+        >Next</a>
+      </li>
+      <li>
+        <a
+          href="{{ request.path }}?{% urlparams page=page_obj.paginator.num_pages %}"
+          hx-boost="true"
+          hx-swap="outerHTML"
+          hx-target="closest .fastview-list"
+        >Last &raquo;</a>
+      </li>
+    {% endif %}
+
+  {% endif %}
+  </ul>
+
+{% endspaceless %}
+</div>

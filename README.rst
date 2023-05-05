@@ -2,7 +2,7 @@
 Django Fastview
 ===============
 
-Flexible view system to help you build views quickly.
+Fast development of complex CRUD views for Django.
 
 .. image:: https://github.com/radiac/django-fastview/actions/workflows/ci.yml/badge.svg
     :target: https://github.com/radiac/django-fastview/actions/workflows/ci.yml
@@ -14,17 +14,46 @@ Flexible view system to help you build views quickly.
     :target: https://django-fastview.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-Fastview slashes development time for modern hybrid frontends - build comprehensive yet
-customisable CRUD views in a couple of lines, with built-in HTMX support.
+Fastview slashes development time for modern hybrid apps - build comprehensive and
+completely customisable CRUD views in a couple of lines, with flexible access control,
+default templates, and built-in HTMX support:
 
-* Create a view group to manage models - list, read, create, update and delete views
-* All views are class-based, so they're quick and easy to customise
-* Default templates are designed to be customised or replaced to fit your design
-* Advanced permission system allows fine-grained row-level access control
-* Built-in support for HTMX (coming soon), inline model formsets and more
+.. code-block:: python
 
-Note: this is an alpha release; expect feature and API changes in future versions. Check
-upgrade notes for instructions when upgrading.
+    from fastview.viewgroups import ModelViewGroup
+    from fastview.permissions import Owner, Staff
+
+    class ContactViewGroup(ModelViewGroup):
+        model = Contact
+        fields = ["name", "category", "email", "phone", "last_updated"]
+        search_fields = ["name"]
+        filters = ["category", "last_updated"]
+        permission = Owner('owner') | Staff()
+
+    # urls.py
+    urlpatterns = [
+        ...
+        url(r'^contacts/', WikiViewGroup().include(namespace="contacts")),
+    ]
+
+
+Inspired by Django's admin, you now have a group of 5 views using your own templates,
+ready to customise and extend. See the examples for more details.
+
+Fastview lets you:
+
+* Manage model CRUD - list, read, create, update and delete views
+* All views are class-based, so they're quick and easy to add, customise or replace
+* Views can be embedded in other views with HTMX
+* Default templates are flexible to fit your design
+* Advanced permission system for fine-grained row-level access control
+* Built-in support for HTMX, inline model formsets and more
+
+Note: this is an alpha release; see the `roadmap
+<https://django-fastview.readthedocs.io/en/latest/contributing.html#roadmap>`_ for
+planned breaking changes, and the `upgrade notes
+<https://django-fastview.readthedocs.io/en/latest/upgrading.html>`_ for instructions
+when upgrading.
 
 
 * Project site: https://radiac.net/projects/django-fastview/
@@ -122,8 +151,8 @@ Build a more complex view group with custom view classes and complex access cont
             permission=Public(),
         )
 
-        # Override update with a custom view, and limit access to staff or post owners
-        update_view = BlogUpdateView.config(
+        # Override change with a custom view, and limit access to staff or post owners
+        change_view = BlogUpdateView.config(
             permission=Staff() | Owner("owner"),
         )
 

@@ -3,13 +3,34 @@ Contributing
 ============
 
 Contributions are welcome, preferably via pull request. Check the github issues and
-project :ref:`roadmap <roadmap>` to see what needs work. Fastview aims to make common
-things easy and everything else possible. If you're thinking about adding a new feature,
-it's worth opening a new ticket to discuss whether it's common enough to be suitable for
-adding to the project.
+project :ref:`roadmap <roadmap>` below to see what needs work. Fastview aims to make
+common things easy and everything else possible. If you're thinking about adding a new
+feature, it's worth opening a new ticket to discuss it first.
 
 When submitting UI changes, please aim to support the latest versions of Chrome, Firefox
 and Edge through progressive enhancement.
+
+
+Roadmap
+=======
+
+Planned breaking changes during alpha:
+
+* Replace action definitions with an ``Action`` class (similar to the ``DisplayValue``)
+* Restructure default templates for detail and form views
+* Improve default CSS styling
+* Split formset JavaScript into a separate project
+
+Planned additional features:
+
+* Add viewgroup attribute boosting
+* Add ``DisplayValue`` classes for specific model fields
+* Optimise permission queries, particularly for ``permissions.Owner``
+* Improved slug management by allowing views to define their own URLs
+* Add HTMX support for create, update, delete and detail views
+* Add ``Filter`` classes for common use cases in model fields
+* Extend ``Action`` class to support HTMX-based actions within the list view
+* Optional Tailwind-based theme
 
 
 Installing

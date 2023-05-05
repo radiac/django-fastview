@@ -275,6 +275,9 @@ class Filter(BaseFilter):
         base_url = request.path
         params = request.GET.copy()
 
+        # Exclude pagination so we don't end up on an invalid page
+        params.pop("page", None)
+
         for value, label in choices:
             if not value:
                 # Delete from params. Use pop instead of del as we'll also cover the
@@ -550,6 +553,7 @@ class TreeFilter(Filter):
         request = self.view.request
         base_url = request.path
         params = request.GET.copy()
+        params.pop("page", None)
 
         def generate_for_nodelist(nodes):
             choice: ChoiceType

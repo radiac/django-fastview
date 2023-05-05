@@ -10,16 +10,25 @@ are available by installing the master branch from github (see
 :ref:`installation_instructions` for details).
 
 
-0.1.1, TBC
+0.2.0, TBC
 ----------
 
 Feature:
 
+* HTMX support in the list view
+* List view sorting, filtering and pagination works when embedded as a fragment (HTMX)
+* Templates are easier to customise
+* Add list support for `Tagulous <https://github.com/radiac/django-tagulous>`_ tag trees
 * Owner.check supports complex relationships
+
+Changes:
+
+* The list template has been broken into separate includes - see :doc:`upgrading`
 
 Bugfix:
 
 * Catch ObjectFastViewMixin returning a 404 when not logged in (#40)
+* Clear pagination when changing filters
 
 Thanks to:
 

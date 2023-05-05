@@ -1,12 +1,16 @@
 from copy import copy
 
 from django import template
+from django.conf import settings
 from django.http import QueryDict
 from django.template import TemplateSyntaxError
-from django.template.base import token_kwargs
+from django.template.base import token_kwargs, Token, TokenType, FilterExpression
 from django.template.response import SimpleTemplateResponse
 from django.urls import resolve, reverse
 from django.utils.safestring import mark_safe
+from django.template.loader_tags import do_include, IncludeNode
+from ..urls import urlparams
+from ..views.mixins import FastViewMixin
 
 
 register = template.Library()
@@ -17,7 +21,8 @@ def dev_breakpoint(context):
     """
     Internal developer tag to help debug templates
     """
-    breakpoint()
+    if settings.DEBUG:
+        breakpoint()
     return ""
 
 
@@ -31,8 +36,8 @@ def formset_pk_name(formset):
     return formset.model._meta.pk.name
 
 
-@register.simple_tag(takes_context=True)
-def urlparams(context, **kwargs):
+@register.simple_tag(name="urlparams", takes_context=True)
+def template_urlparams(context, **kwargs):
     """
     Update the current GET params with the specified values, and return an URL-encoded
     string, preserving other params.
@@ -43,16 +48,7 @@ def urlparams(context, **kwargs):
 
         <a href="{% url .. %}?{% urlparams foo=bar remove=None %}">
     """
-    params = context["request"].GET.copy()
-    # Can't call params.update() - a QueryDict appends to existing, doesn't overwrite
-    for key, value in kwargs.items():
-        if value is None:
-            if value in params:
-                del params[key]
-        else:
-            params[key] = value
-    querystring = params.urlencode()
-    return querystring
+    return urlparams(context["request"].GET, **kwargs)
 
 
 @register.tag
@@ -166,3 +162,50 @@ class FragmentNode(template.Node):
         response_content = mark_safe(response.content.decode())
 
         return response_content
+
+
+class FragmentComponentNode(IncludeNode):
+    def render(self, context):
+        # We're subclassing IncludeNode, which stores our component name as template
+        component_name = self.template.resolve(context)
+        if not isinstance(component_name, str):
+            raise ValueError("Fragment component must be called with a name string")
+
+        # Find the current view
+        view = context.get("view")
+        if not view or not isinstance(view, FastViewMixin):
+            raise ValueError(
+                "fragment_component can only be used in a fragment template"
+            )
+
+        # Get all potential fragment template names and turn them into component names
+        names = view.get_fragment_template_names()
+        components = [f"{name.rsplit('.',1)[0]}/{component_name}" for name in names]
+
+        # Trick IncludeNode into using our list of components instead of the original
+        # template name
+        CONTEXT_VAR = "fastview_component_includes"
+        old_template = self.template  # this should not be necessary, but just in case
+        self.template = FilterExpression(CONTEXT_VAR, self.parser)
+        with context.push(**{CONTEXT_VAR: components}):
+            response = super().render(context)
+        self.template = old_template
+        return response
+
+
+@register.tag("fragment_component")
+def fragment_component(parser, token):
+    """
+    Generate a list of paths to look for the specified fragment component
+
+    Example::
+
+        {% fragment_component "data.html" %}
+        {% fragment_component "data.html" with bar="1" %}
+    """
+    # We don't want to have to re-implement do_include, so just call it and swap the
+    # class of the returned node, to get our FragmentComponentNode.render top of the MRO
+    node = do_include(parser, token)
+    node.__class__ = FragmentComponentNode
+    node.parser = parser  # will need this for creating a FilterExpression
+    return node

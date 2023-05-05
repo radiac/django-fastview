@@ -13,7 +13,7 @@ from django.db.models import Q, QuerySet
 from django.views import generic
 
 from ..constants import PARAM_LIMIT, PARAM_ORDER, PARAM_SEARCH
-from .display import ObjectValue
+from .display import ObjectValue, DisplayValue
 from .filters import BaseFilter, FilterError, field_to_filter_class
 from .mixins import (
     DisplayFieldMixin,
@@ -54,7 +54,7 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
     #:          CustomValue(),  # :class:`fastview.views.display.DisplayValue` subclass
     #:
     #: Defaults to show the string value of the model instance
-    fields = [ObjectValue()]
+    fields: Optional[List[Union[str, DisplayValue]]] = [ObjectValue()]
 
     #: Name of action for the ViewGroup
     action = "list"
@@ -107,11 +107,18 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
                 'param': Filter('param', ...),
             }
         """
+        # New filter lookup structure
         filters: Dict[str, BaseFilter] = {}
-        if not self.filters:
+
+        # Find filter definition - look locally, then on ViewGroup
+        filter_def = self.filters
+        if filter_def is None:
+            if self.viewgroup and self.viewgroup.filters:
+                filter_def = self.viewgroup.filters
+        if not filter_def:
             return filters
 
-        for filter_obj in self.filters:
+        for filter_obj in filter_def:
             if not isinstance(filter_obj, BaseFilter):
                 # Convert field name into a filter object
                 field_name = filter_obj
@@ -186,11 +193,17 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
         return qs
 
     def search_queryset(self, search_query: str, qs: QuerySet) -> QuerySet:
-        if not self.search_fields:
-            return qs
+        # Look locally
+        search_fields = self.search_fields
+        if search_fields is None:
+            # Look in the viewgroup
+            if self.viewgroup:
+                search_fields = self.viewgroup.search_fields
+            if not search_fields:
+                return qs
 
         rules = Q()
-        for field in self.search_fields:
+        for field in search_fields:
             # Add __icontains to the field, unless it already specifies a string rule
             if "__" in field:
                 suffix = field.rsplit("__", 1)[1]

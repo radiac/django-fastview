@@ -9,7 +9,7 @@
         {% if selected %}
           {{ label }}
         {% else %}
-          <a href="{{ url }}">{{ label }}</a>
+          <a href="{{ url }}" hx-boost="true" hx-swap="outerHTML" hx-target="closest .fastview-list">{{ label }}</a>
         {% endif %}
 
     {% if children is not None %}

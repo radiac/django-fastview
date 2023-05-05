@@ -18,27 +18,51 @@ def snake_slugify(value: str) -> str:
 
 
 class DisplayValue:
+    """
+    Abstract base class for all display values
+    """
+
     def get_label(self, view: DisplayFieldMixin) -> str:
         """
-        Return a label for this field
+        Args:
+            view: The view class rendering this value
+
+        Returns:
+            str: The label for this field
         """
         raise NotImplementedError()
 
     def get_slug(self, view: DisplayFieldMixin) -> str:
         """
-        Return a slug for this field, for use in ordering
+        Args:
+            view: The view class rendering this value
+
+        Returns:
+            str: A slug for this field, for use in ordering
         """
         return snake_slugify(self.get_label(view))
 
-    def get_value(self, instance: Model) -> Any:
+    def get_value(self, view: DisplayFieldMixin, instance: Model) -> Any:
         """
-        Return the value as a safe HTML string
+        Args:
+            view: The view class rendering this value
+            instance: The model instance for this value
+
+        Returns:
+            Any: The value as it will be passed to the template
+
+        If this returns a string of valid sanitised HTML, mark it with ``mark_safe`` for
+        it to be rendered without further escaping.
         """
         raise NotImplementedError()
 
     def get_order_by(self, view: DisplayFieldMixin) -> str:
         """
-        Return the value as a safe HTML string
+        Args:
+            view: The view class rendering this value
+
+        Returns:
+            str: Field name for order_by(..)
         """
         raise NotImplementedError()
 
@@ -48,6 +72,7 @@ class AttributeValue(DisplayValue):
     Display an attribute of the object
     """
 
+    # Values set by __init__
     attribute: str
     label: Optional[str]
     order_by: Optional[str]
@@ -68,9 +93,13 @@ class AttributeValue(DisplayValue):
 
     def get_label(self, view: DisplayFieldMixin) -> str:
         """
-        Return the label to use when displaying this value
+        Args:
+            view: The view class rendering this label
 
-        Priority is given to a `label` set by :func:`__init__`
+        Returns:
+            str: the label for this value
+
+        Priority is given to a ``label`` set by :func:`__init__`
 
         If not set, it will honour Django's admin syntax by looking for a
         ``short_description`` attribute on the view's model, eg::
@@ -101,7 +130,15 @@ class AttributeValue(DisplayValue):
 
         return self.attribute.title().replace("_", " ")
 
-    def get_value(self, instance: Model) -> Any:
+    def get_value(self, view: DisplayFieldMixin, instance: Model) -> Any:
+        """
+        Args:
+            view: The view class rendering this value
+            instance: The model instance for this value
+
+        Returns:
+            Any: The attribute value from the instance
+        """
         # TODO: Smart return values for better rendering:
         #   choices should use get_x_display()
         #   map booleans to icons - render a template, or format a settings string
@@ -116,9 +153,13 @@ class AttributeValue(DisplayValue):
 
     def get_order_by(self, view: DisplayFieldMixin) -> str:
         """
-        Return field name for order_by(..)
+        Args:
+            view: The view class rendering this label
 
-        Priority is given to an `order_by` set by :func:`__init__`.
+        Returns:
+            str: Field name for order_by(..)
+
+        Priority is given to an ```order_by` set by :func:`__init__`.
 
         If not set, it will honour Django's admin syntax by looking for a
         ``admin_order_field`` attribute on the attribute on the view's model, eg::
@@ -157,7 +198,7 @@ class ObjectValue(DisplayValue):
     def get_label(self, view: DisplayFieldMixin) -> str:
         return view.model._meta.verbose_name.title
 
-    def get_value(self, instance: Model) -> Any:
+    def get_value(self, view: DisplayFieldMixin, instance: Model) -> Any:
         return str(instance)
 
     def get_order_by(self, view: DisplayFieldMixin) -> str:

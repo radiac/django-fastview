@@ -11,6 +11,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db.models import AutoField
 from django.forms.models import ModelForm, modelform_factory
 from django.http import Http404
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.views.generic.edit import ModelFormMixin
 
@@ -130,6 +131,11 @@ class FastViewMixin(AbstractFastView):
     # Track whether this is being called as a fragment
     _as_fragment: bool = False
 
+    #: Default template for this Fastview view class
+    #:
+    #: This must be set by subclasses
+    default_template_name: str = "fastview/missing.html"  # intentionally invalid
+
     #: Base template name for view templates to extend
     #: If not set, will be inherited from the ViewGroup
     #: If not set and not part of a ViewGroup, will use ``default_base_template_name``
@@ -138,14 +144,40 @@ class FastViewMixin(AbstractFastView):
     #: Default base template name for templates, when no ``base_template_name`` is found
     default_base_template_name: str = "fastview/base.html"
 
-    # Template name when rendering a fragment
+    #: Template name for the inner template fragment
+    #:
+    #: Defaults to the template names from ``.get_full_template_names()``, but with
+    #: ``fragments/`` before the filename
+    #:
+    #: This file does not need to exist - it is a valid approach to set this to eg
+    #: ``myapp/list``, then create ``myapp/list/data.html`` to customise the data table
     fragment_template_name: Optional[str] = None
 
+    # Cached template names
+    _template_names: Optional[list[str]] = None
+    _fragment_template_names: Optional[list[str]] = None
+
     def dispatch(self, request, *args, as_fragment=False, **kwargs):
-        self._as_fragment = as_fragment
+        if request.headers.get("HX-Request", "false") == "true":
+            self._as_fragment = True
+        else:
+            self._as_fragment = as_fragment
         return super().dispatch(request, *args, **kwargs)
 
-    def get_template_names(self, as_fragment=False) -> List[str]:
+    def get_full_template_names(self) -> list[str]:
+        """
+        Generate a list of where we may expect to find full template names
+
+        This will be the 2 standard path for a ListView, plus 2 Fastview-specific paths:
+
+        #. <view.template_name>
+        #. <app_label>/<model_name>_list.html
+        #. <viewgroup_template_root>/<view.action>.html
+        #. <view.default_template_name>
+        """
+        if self._template_names:
+            return self._template_names
+
         # Get default template names
         names = super().get_template_names()
         extra = []
@@ -159,9 +191,29 @@ class FastViewMixin(AbstractFastView):
         # Add in our default as a fallback
         extra.append(self.default_template_name)
 
+        # Add our extra after the default Django
         names += extra
+
+        self._template_names = names
+        return names
+
+    def get_template_names(self, as_fragment=False) -> List[str]:
+        """
+        Return the current template names based on  ``get_full_template_names``
+
+        If we're in fragment mode, each path will have ``fragments/``
+        inserted before the filename, eg
+        ``<viewgroup_template_root>/<view.action>.html`` becomes
+        ``<viewgroup_template_root>/fragments/<view.action>.html``.
+        """
+        # Retrieve prepared names
+        names = self.get_full_template_names()
+
         if not as_fragment and not self._as_fragment:
             return names
+
+        if self._fragment_template_names:
+            return self._fragment_template_names
 
         # Convert to use fragment templates
         fragment_names = []
@@ -173,6 +225,7 @@ class FastViewMixin(AbstractFastView):
             name = "/".join(parts[:-1] + [TEMPLATE_FRAGMENT_SLUG, parts[-1]])
             fragment_names.append(name)
 
+        self._fragment_template_names = fragment_names
         return fragment_names
 
     def get_fragment_template_names(self) -> List[str]:
@@ -317,7 +370,7 @@ class BaseFieldMixin:
 
     Generate fields based on the model
 
-    For use with a view using SingleObjetMixin or MultipleObjectMixin
+    For use with a view using SingleObjectMixin or MultipleObjectMixin
     """
 
     model: Type[ModelBase]  # Help type hinting to identify the intended base classes
@@ -329,10 +382,17 @@ class BaseFieldMixin:
         Return either self.fields, or all editable fields on the model
         (excluding anything in self.exclude)
         """
+        # Look for local fields/excludes
         fields = self.fields
+        exclude = self.exclude
+        if fields is None and exclude is None and self.viewgroup:
+            # Look on viewgroup
+            fields = self.viewgroup.fields
+            exclude = self.viewgroup.exclude
+
         if fields is None:
-            # Fields not specified
-            exclude = self.exclude or []
+            if exclude is None:
+                exclude = []
 
             # Follow Django admin rules - anything not an AutoField with editable=True
             fields = [

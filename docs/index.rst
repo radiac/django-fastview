@@ -20,7 +20,6 @@ Contents
     upgrading
     contributing
     changelog
-    api
 
 
 Indices and tables
