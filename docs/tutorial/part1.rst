@@ -84,7 +84,8 @@ Remove the existing line with ``include("polls.urls")`` and replace it with a ca
         path("", RedirectView.as_view(pattern_name="polls:index", permanent=False)),
     ]
 
-And now we have a working ``ViewGroup``. Lets see what happens in the browser:
+And now we have a working ``ViewGroup``, in the namespace ``polls``, so the redirect to
+``polls:index`` will still work. Lets see what happens in the browser:
 
 .. image:: part1__index_no-auth.png
 
@@ -96,10 +97,9 @@ Make everything public
 ======================
 
 Lets fix access first. By default, ViewGroups deny access to all their views. This is by
-design - we're taking a similar approach to the Django admin site, where you have to opt
-users in -  we want to make you think about who you're giving access to which views.
+design - we want to make you think about who you're giving access to which views.
 
-For now, lets just make every view public:
+That said, for now lets just make every view public:
 
 .. code-block:: python
     :caption: polls/views.py

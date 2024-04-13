@@ -37,22 +37,16 @@ __ https://github.com/radiac/django-fastview/tree/develop/example
 Prepare your project
 ====================
 
-We'll assume in this tutorial that you have just finished part 7 of the official
-tutorial, and have the polls app in front of you. You have ``django`` installed.
-
-We'll also assume you've learnt about the ``{% extends .. %}`` `template tag`__, and
-have given all your poll templates the base template ``templates/base_site.html`` using
-a ``content`` block. This will simplify the tutorial when we come to work with
-Fastview's JavaScript and CSS.
-
-__ https://docs.djangoproject.com/en/3.2/ref/templates/builtins/#extends
+We'll assume that you have just finished part 7 of the official tutorial, and have the
+polls app in front of you. You have ``django`` installed. You've also given all your
+poll templates the base template ``templates/base_site.html`` using a ``content`` block.
+We're also going to change ``Question.was_published_recently`` to use the past 30 days.
 
 You can get a copy of this starting point from from
 `<https://github.com/radiac/django-tutorial-starter>`_.
 
-If you'd prefer to just read along we'll cover everything as we go, but it may help to
-know that the models are:
-
+If you'd prefer to just read along we'll cover everything as we go. We're starting with
+these models:
 
 .. literalinclude:: index__models.py
     :caption: polls/models.py
@@ -66,8 +60,8 @@ Going forward we'll need some data. We want a good spread across years for when 
 to filtering, so lets create some questions, one a week for 150 weeks - starting a year
 and a half ago, and running a year and a half into the future.
 
-You can run the following in ``manage.py shell``, or download it as a
-`management command`__ from the Fastview example project:
+Either grab the `management command`__ from the Fastview example project, or run the
+following code in ``./manage.py shell``:
 
 .. literalinclude:: index__data.py
     :language: python
@@ -75,14 +69,5 @@ You can run the following in ``manage.py shell``, or download it as a
 __ https://raw.githubusercontent.com/radiac/django-fastview/develop/example/polls/management/commands/add_poll_sample.py
 
 
-Lastly, with sample data of one question a week, ``was_published_recently`` will be more
-useful if we make it 30 days::
-
-    @admin.display(boolean=True, ordering="pub_date", description="Published recently?")
-    def was_published_recently(self):
-        now = timezone.now()
-        return now - datetime.timedelta(days=30) <= self.pub_date <= now
-
-
-Now we're ready to make a start, lets move on to `part 1 of this tutorial <part1>`_ to
+Now we're ready to make a start. Lets move on to `part 1 of this tutorial <part1>`_ to
 learn how to add Fastview to your project and set up your first view group.
