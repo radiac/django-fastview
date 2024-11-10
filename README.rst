@@ -28,12 +28,12 @@ default templates, and built-in HTMX support:
         fields = ["name", "category", "email", "phone", "last_updated"]
         search_fields = ["name"]
         filters = ["category", "last_updated"]
-        permission = Owner('owner') | Staff()
+        permission = Owner('added_by') | Staff()
 
     # urls.py
     urlpatterns = [
         ...
-        url(r'^contacts/', WikiViewGroup().include(namespace="contacts")),
+        url(r'^contacts/', ContactViewGroup().include(namespace="contacts")),
     ]
 
 

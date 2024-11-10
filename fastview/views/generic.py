@@ -13,7 +13,7 @@ from django.db.models import Q, QuerySet
 from django.views import generic
 
 from ..constants import PARAM_LIMIT, PARAM_ORDER, PARAM_SEARCH
-from .display import ObjectValue, DisplayValue
+from .display import DisplayValue, ObjectValue
 from .filters import BaseFilter, FilterError, field_to_filter_class
 from .mixins import (
     DisplayFieldMixin,
@@ -29,6 +29,9 @@ class ListView(DisplayFieldMixin, ModelFastViewMixin, generic.ListView):
     """
     A permission-aware ListView with support for ViewGroups
     """
+
+    #: The default URL for this - take the view name from the ViewGroup
+    url_pattern = None
 
     #: The default template name
     default_template_name = "fastview/list.html"
@@ -344,6 +347,7 @@ class CreateView(
     default_template_name = "fastview/create.html"
     action = "create"
     action_label = "Add"
+    url_pattern = "{name}/"
 
 
 class UpdateView(

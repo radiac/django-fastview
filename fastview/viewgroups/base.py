@@ -11,14 +11,15 @@ from django.views.generic.list import MultipleObjectMixin
 
 from ..constants import INDEX_VIEW, OBJECT_VIEW, VIEW_SUFFIX
 from ..permissions import Permission
+from ..views.display import DisplayValue
+from ..views.filters import BaseFilter
 from ..views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from ..views.mixins import AbstractFastView
-from ..views.filters import BaseFilter
-from ..views.display import DisplayValue
+from ..views.simple import FunctionView
 
 if TYPE_CHECKING:
     from django.db.models.base import ModelBase
-    from django.urls.resolvers import CheckURLMixin
+    from django.urls.resolvers import URLPattern
 
 
 class ViewGroupType(type):
@@ -76,7 +77,7 @@ class ViewGroup(metaclass=ViewGroupType):
     # All groups must define an index view
     index_view: Type[AbstractFastView] | dict[str, Any]
 
-    views: Dict[str, AbstractFastView]
+    views: Dict[str, type[AbstractFastView]]
 
     action_links: Optional[List[str]] = None
 
@@ -139,7 +140,9 @@ class ViewGroup(metaclass=ViewGroupType):
                 self.views[name] = view.config(**config)
                 setattr(self, attr, self.views[name])
 
-    def _get_view_attrs(self, name: str, view: View) -> Dict[str, Any]:
+    def _get_view_attrs(
+        self, name: str, view: type[AbstractFastView]
+    ) -> Dict[str, Any]:
         """
         Get a dict of attrs to set on a view class before it is added to self.views
         """
@@ -171,46 +174,19 @@ class ViewGroup(metaclass=ViewGroupType):
         app_namespace = "fastview"
         return include((urls, app_namespace), namespace=namespace)
 
-    def get_urls(self) -> List[CheckURLMixin]:
+    def get_urls(self) -> list[URLPattern]:
         """
         Collect or build url patterns for each view
         """
         patterns = []
         name: str
-        view: Type[View]
+        view: type[View]
+        print(f"CALLY {self.views=}")
         for name, view in self.views.items():
             # Build pattern
-            pattern: CheckURLMixin = self.get_url_pattern_for_view(name, view)
+            pattern: URLPattern = view.get_url(name)
             patterns.append(pattern)
         return patterns
-
-    def get_url_pattern_for_view(self, name: str, view: Type[View]) -> CheckURLMixin:
-        """
-        Get the URL pattern for the given view name and view
-
-        Subclasses will probably want to override `get_url_route_for_view()` instead
-        """
-        # Build route string
-        route = self.get_url_route_for_view(name, view)
-
-        # Resolve view
-        pattern_view = view.as_view()
-
-        # Build the pattern
-        pattern = path(route, pattern_view, name=name)
-        return pattern
-
-    def get_url_route_for_view(self, name: str, view: Type[View]) -> str:
-        """
-        Build the URL pattern match for the given view name and view.
-
-        Called internally by `get_url_pattern_for_view()` has checked for `get_<name>_url()`.
-        """
-        if name == INDEX_VIEW:
-            route = ""
-        else:
-            route = f"{name}/"
-        return route
 
     def get_action_links(self):
         # TODO: Detect additional view actions
@@ -336,22 +312,6 @@ class ModelViewGroup(ViewGroup):
             return template_root
         app_label, model_name = self.model._meta.label_lower.split(".", 1)
         return f"{app_label}/{model_name}"
-
-    def get_url_route_for_view(self, name: str, view: Type[View]) -> CheckURLMixin:
-        """
-        Build the URL route including the object's primary key or slug
-        """
-        if view.has_id_slug:
-            # TODO: add slug support
-            if name == OBJECT_VIEW:
-                return "<int:pk>/"
-            else:
-                return f"<int:pk>/{name}/"
-
-        elif name == OBJECT_VIEW:
-            raise ValueError("Detail view must be a SingleObjectMixin subclass")
-
-        return super().get_url_route_for_view(name, view)
 
     def get_id_field(self):
         """

@@ -11,6 +11,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db.models import AutoField
 from django.forms.models import ModelForm, modelform_factory
 from django.http import Http404
+from django.urls import path
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.views.generic.edit import ModelFormMixin
@@ -21,7 +22,6 @@ from ..permissions import Denied, Permission
 from ..urls import viewgroup_reverse
 from .display import AttributeValue, DisplayValue
 from .objects import AnnotatedObject
-
 
 if TYPE_CHECKING:
     from django.db.models.base import ModelBase
@@ -39,9 +39,10 @@ class AbstractFastView(UserPassesTestMixin):
     viewgroup: Optional[ViewGroup] = None
     permission: Optional[Permission] = None
     has_id_slug: bool = False
+    url_pattern: str | None = None
 
     @classmethod
-    def config(cls, **attrs: Any) -> AbstractFastView:
+    def config(cls, **attrs: Any) -> type[AbstractFastView]:
         """
         Creates a new subclass of this View, with the attributes provided
         """
@@ -57,7 +58,7 @@ class AbstractFastView(UserPassesTestMixin):
 
         # Create a subclass of the original view with the new attributes
         # cast() because type inference can't tell we'll subclassing ourselves
-        view = cast(AbstractFastView, type(cls.__name__, (cls,), attrs))
+        view = cast(type[AbstractFastView], type(cls.__name__, (cls,), attrs))
         return view
 
     def get_test_func(self) -> Callable:
@@ -100,6 +101,21 @@ class AbstractFastView(UserPassesTestMixin):
         """
         permission = self.__class__.get_permission()
         return permission.check(self.request)
+
+    @classmethod
+    def get_url(cls, name: str) -> URLPattern:
+        """
+        Get entry for urlpatterns
+        """
+        route = cls.url_pattern
+        if name == INDEX_VIEW:
+            route = ""
+        elif route is None:
+            route = f"{name}/"
+        else:
+            route = route.format(name=name)
+
+        return path(route, cls.as_view(), name=name)
 
 
 class FastViewMixin(AbstractFastView):
@@ -335,6 +351,9 @@ class ObjectFastViewMixin(ModelFastViewMixin):
     Mixin for class-based views which operate on a single object
     """
 
+    #: Default object-based URLs to /viewgroup/pk/action/
+    url_pattern = "<int:pk>/{name}/"
+
     def has_permission(self) -> bool:
         """
         Check if this view instance has permission, based on self.request, the model and
@@ -373,8 +392,9 @@ class BaseFieldMixin:
     For use with a view using SingleObjectMixin or MultipleObjectMixin
     """
 
-    model: Type[ModelBase]  # Help type hinting to identify the intended base classes
-    fields: Optional[List[Any]] = None  # Liskov made me do it
+    model: type[ModelBase]  # Help type hinting to identify the intended base classes
+    viewgroup: type[ViewGroup] | None
+    fields: Optional[List[Any]] = None
     exclude: Optional[List[Any]] = None
 
     def get_fields(self):
@@ -385,7 +405,11 @@ class BaseFieldMixin:
         # Look for local fields/excludes
         fields = self.fields
         exclude = self.exclude
-        if fields is None and exclude is None and self.viewgroup:
+        if (
+            fields is None
+            and exclude is None
+            and getattr(self, "viewgroup", None) is not None
+        ):
             # Look on viewgroup
             fields = self.viewgroup.fields
             exclude = self.viewgroup.exclude

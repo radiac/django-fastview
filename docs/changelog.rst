@@ -18,12 +18,14 @@ Feature:
 * HTMX support in the list view
 * List view sorting, filtering and pagination works when embedded as a fragment (HTMX)
 * Templates are easier to customise
+* Function-based view support
 * Add list support for `Tagulous <https://github.com/radiac/django-tagulous>`_ tag trees
 * Owner.check supports complex relationships
 
 Changes:
 
 * The list template has been broken into separate includes - see :doc:`upgrading`
+* URLs are now defined by view classes
 
 Bugfix:
 
