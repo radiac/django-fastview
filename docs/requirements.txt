@@ -16,7 +16,7 @@ certifi==2021.10.8
     # via requests
 charset-normalizer==2.0.12
     # via requests
-django==3.2.12
+django==3.2.18
     # via -r requirements.in
 docutils==0.17.1
     # via
@@ -26,8 +26,6 @@ docutils==0.17.1
 idna==3.3
     # via requests
 imagesize==1.3.0
-    # via sphinx
-importlib-metadata==4.11.0
     # via sphinx
 jinja2==3.0.3
     # via sphinx
@@ -70,5 +68,3 @@ sqlparse==0.4.2
     # via django
 urllib3==1.26.8
     # via requests
-zipp==3.7.0
-    # via importlib-metadata
